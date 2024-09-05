@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "FlashcardExtension2",
+    "version": "0.0.1",
+    "description": "Client for FlashcardAPIv2",
+    "permissions": ["storage"],
+    "background": {
+      "service_worker": "background.js",
+      "scripts": ["background.js"]
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"],
+        "run_at": "document_start"
+      }
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "web_accessible_resources": [
+      {
+        "resources": ["styles/*.css"],
+        "matches": ["<all_urls>"]
+      }
+    ],
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "FlashcardExtension2@blobsey.com"
+      }
+    }
+  }

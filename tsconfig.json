@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+      "target": "es2018",
+      "module": "commonjs",
+      "strict": true,
+      "esModuleInterop": true,
+      "jsx": "react",
+      "outDir": "./dist",
+      "rootDir": "./src",
+      "types": [
+        "firefox-webext-browser"
+      ]
+    },
+    "include": ["src/**/*"]
+  }

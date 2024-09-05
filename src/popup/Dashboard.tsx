@@ -1,0 +1,23 @@
+import React, { useState, useEffect } from 'react';
+import usePersistentState from '../utils/usePersistentState';
+
+const Dashboard: React.FC = () => {
+
+    const [apiBaseUrl, _] = usePersistentState('apiBaseUrl', '');
+
+    return (
+        <>
+        <div>Logged in to</div>
+        <div><code>{apiBaseUrl}</code></div>
+        <div>
+        <button
+            onClick={() => browser.runtime.sendMessage({ action: 'logout' })}>
+                Logout
+            </button> 
+        </div>           
+        </>
+    )
+};
+
+
+export default Dashboard;

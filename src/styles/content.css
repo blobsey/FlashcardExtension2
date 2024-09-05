@@ -1,0 +1,104 @@
+:host {
+    all: initial;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    color: white;
+}
+
+#blobsey-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: safe center;
+    justify-content: safe center;
+    z-index: 2147483641; /* NOTE: Max is 2147483647 */
+}
+
+/* Makes the screenshot slightly larger than viewport and then
+tiles it to get rid of 'halo-effect' with cheap blur */
+#blobsey-overlay-background {
+    position: fixed;
+    top: -5%;
+    left: -5%;
+    height: 110vh;
+    width: 110vw;
+    z-index: 2147483640; /* NOTE: Max is 2147483647 */
+}
+
+#blobsey-overlay-background.filter {
+    background-repeat: repeat;
+    background-size: 90%;
+    background-position: center;
+    filter: blur(10px) brightness(40%);  
+}
+
+#blobsey-overlay-background.backdropFilter {
+    background-color: rgba(0, 0, 0, 0.60);
+    backdrop-filter: blur(10px);
+}
+
+.blobsey-rendered-markdown {
+    display: flex;
+    flex-direction: column;
+    align-items: safe center;
+    max-width: 60em;
+    line-height: 1.5em;
+}
+
+.blobsey-rendered-markdown * {
+    margin: .5em auto .5em auto;
+}
+
+#blobsey-overlay button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center; 
+    width: 6em;
+    padding: .25em; 
+    cursor: pointer;
+    color: rgb(255, 255, 255);
+    border-radius: 3px;
+    background:rgba(255, 255, 255, 0.1);
+    border: transparent;
+    outline: none;
+    transition: background-color 0.1s, border-color 0.1s, color 0.1s;
+    line-height: 24px;
+}
+
+#blobsey-overlay button:hover {
+    background: rgba(255, 255, 255, 0.2); 
+}
+
+#blobsey-overlay button:focus {
+    color: rgba(255, 255, 255, 1);
+    outline: 1px solid rgba(255, 255, 255, .75);
+}
+
+#blobsey-overlay button:disabled {
+    color: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.5);
+    cursor: default;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#blobsey-overlay pre, #blobsey-overlay code {
+    font: 14px monospace, system-ui, sans-serif; 
+}
+
+#blobsey-overlay code {
+    background-color: rgba(0, 0, 0, 0.25); 
+    border-radius: 3px;
+    padding: 2px 3px;
+}
+
+#blobsey-overlay hr {
+    width: 90%;
+    border: 0;
+    height: 0;
+    outline: 1px solid rgba(255, 255, 255, 0.4);
+}
