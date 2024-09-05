@@ -1,32 +1,26 @@
-#blobsey-quiz-screen,
-#blobsey-grade-screen,
-#blobsey-review-screen {
+#blobsey-flashcard-screen {
     display: flex;
     flex-direction: column;
     align-items: safe center;
 }
 
-#blobsey-grade-buttons {
+#blobsey-flashcard-buttons {
     display: flex;
     flex-direction: row;
     margin: 1em 0;
 }
 
-#blobsey-flip-button {
-    margin: 1em 0;
-}
-
-#blobsey-grade-buttons > *:not(:last-child) {
+#blobsey-flashcard-buttons > *:not(:last-child) {
     margin-right: 1em; 
 }
 
-#blobsey-grade-screen > #blobsey-card-back-wrapper {
+#blobsey-flashcard-screen > #blobsey-card-back-wrapper {
     width: 100%;
     display: grid;
     grid-template-rows: 0fr;
-    transition: grid-template-rows 0.3s ease;
+    transition: grid-template-rows .3s ease;
 }
-#blobsey-grade-screen > #blobsey-card-back-wrapper.expanded {
+#blobsey-flashcard-screen > #blobsey-card-back-wrapper.expanded {
     grid-template-rows: 1fr;
 }
 #blobsey-card-back-wrapper > #blobsey-card-back {

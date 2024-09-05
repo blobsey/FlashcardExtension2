@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import usePersistentState from "../utils/usePersistentState";
 import { 
     Flashcard, 
@@ -7,69 +6,74 @@ import {
     cacheNextFlashcard 
 } from "./common";
 
-const FlashcardScreen: React.FC = () => {
-    const [innerScreen, setInnerScreen] = useState('quiz');
+interface FlashcardScreenProps {
+    navigateToEditScreen?: () => void;
+}
+
+const FlashcardScreen: React.FC<FlashcardScreenProps> = ({ navigateToEditScreen }) => {
+    const [phase, setPhase] = useState<'front' | 'back' | 'reviewed'>('front');
     const [flashcard, setFlashcard] = usePersistentState<Flashcard | null>('flashcard', null);
-    const [flashcardToGrade, setFlashcardToGrade] = useState<Flashcard | null>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const handleFlip = () => {
-        setInnerScreen('grade');
-        setFlashcardToGrade(flashcard);
+        setPhase('back');
+        requestAnimationFrame(() => setIsExpanded(true));
     }
 
-    const QuizInnerScreen = () => {
-        return (
-            <div id="blobsey-quiz-screen">
-                <div id='blobsey-card-front'>
-                    {renderMarkdown(flashcard?.card_front)}
-                </div>
-                <button id='blobsey-flip-button'
-                onClick={handleFlip}>
-                    Flip
-                </button>
+    const handleReview = (grade: string) => {
+        const gradeMap = { again: 1, hard: 2, medium: 3, easy: 4 };
+        const numericalGrade = gradeMap[grade.toLowerCase() as keyof typeof gradeMap];
+
+        setPhase('reviewed');
+        browser.runtime.sendMessage({ 
+            action: 'reviewFlashcard', 
+            grade: numericalGrade,
+            card_id: flashcard?.card_id
+        }).finally(() => {
+            cacheNextFlashcard();
+        });
+    }
+
+    return (
+        <div id="blobsey-flashcard-screen">
+            <div id="blobsey-card-front">
+                {renderMarkdown(flashcard?.card_front)}
             </div>
-        );
-    };
-
-    const GradeInnerScreen = () => {
-        const [isRevealed, setRevealed] = useState(false);
-
-        useEffect(() => {
-            requestAnimationFrame(() => setRevealed(true));
-        }, []);
-
-        return (
-            <div id="blobsey-grade-screen">
-                <div id="blobsey-card-front">
-                    {renderMarkdown(flashcardToGrade?.card_front)}
+            {phase !== 'front' && (
+            <div id="blobsey-card-back-wrapper" className={isExpanded ? 'expanded' : ''}>
+                <div id="blobsey-card-back">
+                    <hr id="blobsey-divider" className={isExpanded ? 'expanded' : ''}/>
+                    {renderMarkdown(flashcard?.card_back)}
                 </div>
-                <div id="blobsey-card-back-wrapper" className={isRevealed ? 'expanded' : ''}>
-                    <div id="blobsey-card-back">
-                        <hr id="blobsey-divider" className={isRevealed ? 'expanded' : ''}/>
-                        {renderMarkdown(flashcardToGrade?.card_back)}
-                    </div>
-                </div>
-                <div id="blobsey-grade-buttons">
-                    {['Again', 'Hard', 'Medium', 'Easy'].map((grade, index) => (
+            </div>
+            )}
+            <div id="blobsey-flashcard-buttons">
+                {phase === 'front' && (
+                    <button id='blobsey-flip-button' onClick={handleFlip}>
+                        Flip
+                    </button>
+                )}
+                {phase === 'back' && (
+                    ['Again', 'Hard', 'Medium', 'Easy'].map((grade) => (
                         <button
                             key={grade}
-                            id={`blobsey-grade-button-${index}`}
-                            onClick={() => {/* Handle grading logic */}}
+                            id={`blobsey-review-button-${grade}`}
+                            onClick={() => handleReview(grade)}
                         >
                             {grade}
                         </button>
-                    ))}
-                </div>
+                    ))
+                )}
+                {phase === 'reviewed' && (
+                    <>
+                        <button onClick={() => setPhase('front')}>Another</button>
+                        {navigateToEditScreen && <button onClick={navigateToEditScreen}>Edit</button>}
+                        <button onClick={() => {/* Handle confirm action */}}>Confirm</button>
+                    </>
+                )}
             </div>
-        );
-    };
-
-    switch(innerScreen) {
-        case 'quiz': 
-            return <QuizInnerScreen />;
-        case 'grade': 
-            return <GradeInnerScreen />;
-    }
+        </div>
+    );
 };
 
 export default FlashcardScreen;

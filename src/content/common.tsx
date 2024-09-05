@@ -47,14 +47,28 @@ The function should be used whenever a new flashcard should be fetched
 such as when reviewing, or when the current flashcard gets deleted */
 export async function cacheNextFlashcard(): Promise<void> {
     const userData = await getUserData();
-    const response = await browser.runtime.sendMessage({ 
-        action: 'nextFlashcard', 
-        deck: userData.deck
-    });
-    if (response.result !== 'success') {
-        throw new Error(`Error while fetching nextFlashcard: ${JSON.stringify(response)}`);
+    const currentFlashcard = await getPersistentState<Flashcard>('flashcard');
+    let newFlashcard;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    do {
+        const response = await browser.runtime.sendMessage({ 
+            action: 'nextFlashcard', 
+            deck: userData.deck
+        });
+        if (response.result !== 'success') {
+            throw new Error(`Error while fetching nextFlashcard: ${JSON.stringify(response)}`);
+        }
+        newFlashcard = response.flashcard;
+        attempts++;
+    } while (newFlashcard.card_id === currentFlashcard?.card_id && attempts < maxAttempts);
+
+    if (newFlashcard.card_id === currentFlashcard?.card_id) {
+        throw new Error(`Failed to fetch a new flashcard after ${maxAttempts} attempts`);
     }
-    await setPersistentState('flashcard', response.flashcard);
+
+    await setPersistentState('flashcard', newFlashcard);
 }
 
 /* Utility function to take a screenshot of the current tab. Will 

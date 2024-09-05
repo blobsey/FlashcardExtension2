@@ -102,23 +102,27 @@ const messageHandlers: Record<string, MessageHandler> = {
         const deck = message.deck || "";
         const data = await handleApiRequest(`/next?deck=${encodeURIComponent(deck)}`);
         sendResponse({result: 'success', ...data});
+    },
+    'reviewFlashcard': async (message, sender, sendResponse) => {
+        const data = await handleApiRequest(`/review/${message.card_id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                grade: message.grade
+            })
+        });
+        sendResponse({result: 'success', ...data});
     }
 }
 
 async function handleApiRequest(path: string, options: RequestInit = {}): Promise<any> {
-    const apiBaseUrl = await getPersistentState('apiBaseUrl');
-
-    const url = `${apiBaseUrl}${path}`;
-
-    // Set content-type to application/json by default due to firefox weirdness
-    if (options.body && !(options.body instanceof FormData)) {
-        options.headers = { ...options.headers, 'Content-Type': 'application/json' };
-        options.body = JSON.stringify(options.body);
-    }
+    const apiBaseUrl = await getPersistentState<string>('apiBaseUrl') as string;
+    let url = new URL(path, apiBaseUrl);
 
     // Include credentials (cookies) in the request
     options.credentials = 'include';
-
 
     const response = await fetch(url, options);
     const contentType = response.headers.get('Content-Type') || '';

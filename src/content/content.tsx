@@ -66,10 +66,11 @@ async function createOverlayIfNotExists(): Promise<void> {
         'content.css', 
         'FlashcardScreen.css'
     ];
+    const timestamp = Date.now(); // Get current timestamp
     for (const file of cssFiles) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = browser.runtime.getURL(`styles/${file}`);
+        link.href = `${browser.runtime.getURL(`styles/${file}`)}?t=${timestamp}`;
         shadowRoot.appendChild(link);
     }
 
