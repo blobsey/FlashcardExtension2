@@ -3,13 +3,18 @@ import FlashcardScreen from "./FlashcardScreen";
 import GradeScreen from "./GradeScreen";
 import usePersistentState from "../common/usePersistentState";
 import { Flashcard } from "../common/types";
+import { reviewFlashcard, editFlashcard } from "../common/common";
+import '../styles/tailwind.css';
+import ReviewScreen from "./ReviewScreen";
 
-type Screen = 'flashcard' | 'grade';
+type Screen = 'flashcard' | 'grade' | 'review';
 
 // BackButton component defined within Overlay.tsx
 const BackButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
-    <button className="blobsey-back-button" onClick={onClick}>
-        Back
+    <button className="blobsey-back-button absolute left-4 top-4" onClick={onClick}>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
     </button>
 );
 
@@ -17,6 +22,8 @@ const Overlay: React.FC = () => {
     const [flashcard, setFlashcard] = usePersistentState<Flashcard | null>('flashcard', null);
     const [currentScreen, setCurrentScreen] = useState<Screen>('flashcard');
     const [screenHistory, setScreenHistory] = useState<Screen[]>(['flashcard']);
+    const [isFlipped, setIsFlipped] = useState<boolean>(false);
+    const [localFlashcard, setLocalFlashcard] = useState<Flashcard | null>(null);
 
     const navigateTo = (screen: Screen) => {
         setScreenHistory(prev => [...prev, screen]);
@@ -32,31 +39,41 @@ const Overlay: React.FC = () => {
         }
     };
 
-    const handleFlip = () => {
-        navigateTo('grade');
-    };
-
-    const handleGrade = (grade: string) => {
-        // Handle grading logic here
-        console.log(`Graded: ${grade}`);
-        goBack(); // Go back to flashcard screen after grading
-    };
-
     return (
         <div id='blobsey-overlay'>
             {currentScreen === 'flashcard' && (
                 <FlashcardScreen
                     flashcard={flashcard}
-                    onFlipPressed={handleFlip}
+                    onFlipPressed={() => {
+                        setLocalFlashcard(flashcard);
+                        navigateTo('grade');
+                    }}
                 />
             )}
-            {currentScreen === 'grade' && flashcard && (
-                <GradeScreen
-                    onGradeButtonClick={handleGrade}
-                    flashcard={{...flashcard}} // Pass a local copy
-                />
+            {currentScreen === 'grade' && localFlashcard && (
+                <>
+                    {screenHistory.length > 1 && <BackButton onClick={goBack} />}
+                    <GradeScreen
+                        onGradeButtonClick={(grade: "again" | "hard" | "medium" | "easy") => {
+                            reviewFlashcard(localFlashcard.card_id, grade);
+                            navigateTo('review');
+                        }}
+                        flashcard={localFlashcard}
+                        isFlipped={isFlipped}
+                        setIsFlipped={setIsFlipped}
+                    />
+                </>
             )}
-            {screenHistory.length > 1 && <BackButton onClick={goBack} />}
+            {currentScreen === 'review' && localFlashcard && (
+                <>
+                    <ReviewScreen
+                    flashcard={localFlashcard}
+                    onEditButtonClick={() => {}}
+                    onConfirmButtonClick={() => {}}
+                    onAnotherButtonClick={() => {}}
+                    />
+                </>
+            )}
         </div>
     );
 };

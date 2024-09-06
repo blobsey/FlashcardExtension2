@@ -102,3 +102,24 @@ tiles it to get rid of 'halo-effect' with cheap blur */
     height: 0;
     outline: 1px solid rgba(255, 255, 255, 0.4);
 }
+
+.blobsey-back-button {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.blobsey-back-button:hover {
+    opacity: 0.7;
+}
+
+.blobsey-back-button svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}

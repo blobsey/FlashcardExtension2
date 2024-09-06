@@ -12,16 +12,18 @@ const FlashcardScreen: React.FC<FlashcardScreenProps> = ({
     onFlipPressed
 }) => {
     return (
-        <div id="blobsey-flashcard-screen">
-            <div id="blobsey-card-front">
+        <>
+        <div className="flex flex-col items-center">
+            <div className="mb-2 text-center">
                 {renderMarkdown(flashcard?.card_front)}
             </div>
-            <div id="blobsey-flashcard-buttons">
-                <button id='blobsey-flip-button' onClick={onFlipPressed}>
-                    Flip
-                </button>
-            </div>
         </div>
+        <div className="flex flex-row mt-2 space-x-4">
+            <button onClick={onFlipPressed}>
+                Flip
+            </button>
+        </div>
+        </>
     );
 };
 

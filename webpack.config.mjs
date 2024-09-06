@@ -1,6 +1,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import CopyPlugin from 'copy-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,6 +11,7 @@ export default {
     popup: './src/popup/index.tsx',
     background: './src/background/background.ts',
     content: './src/content/content.tsx',
+    tailwind: './src/styles/tailwind.css', // Add this line
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -27,7 +29,16 @@ export default {
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1
+            }
+          },
+          'postcss-loader'
+        ],
       },
     ],
   },
@@ -37,7 +48,10 @@ export default {
         { from: "public", to: "" },
         { from: "src/styles", to: "styles" },
       ],
-    })
+    }),
+    new MiniCssExtractPlugin({
+      filename: 'styles/[name].css',
+    }),
   ],
   devtool: 'inline-source-map',
   mode: 'production',

@@ -63,7 +63,7 @@ async function createOverlayIfNotExists(): Promise<void> {
     // Load CSS files
     const cssFiles = [
         'content.css', 
-        'FlashcardScreen.css'
+        'tailwind.css'
     ];
     const timestamp = Date.now(); // Get current timestamp
     for (const file of cssFiles) {

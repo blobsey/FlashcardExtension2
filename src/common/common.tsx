@@ -59,16 +59,17 @@ export async function editFlashcard(
 
 /* Utility function to call /review path of API */
 export async function reviewFlashcard(
-    grade: "again" | "hard" | "medium" | "easy", card_id: string): Promise<Flashcard> {
+    card_id: string,
+    grade: "again" | "hard" | "medium" | "easy"): Promise<Flashcard> {
         const gradeMap = { again: 1, hard: 2, medium: 3, easy: 4 };
         const numericalGrade = gradeMap[grade];
 
+        cacheNextFlashcard();
         const response = await browser.runtime.sendMessage({ 
             action: 'reviewFlashcard', 
             grade: numericalGrade,
             card_id
         });
-        cacheNextFlashcard();
         
         return response.flashcard;
 }

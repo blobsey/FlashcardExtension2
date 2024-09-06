@@ -16,22 +16,28 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({
     onAnotherButtonClick,
 }) => {
     return (
-        <div id="blobsey-review-screen">
-            <div id="blobsey-card-front">
+        <>
+        <div className="flex flex-col items-center">
+            <div className="mb-2 text-center w-full">
                 {renderMarkdown(flashcard.card_front)}
             </div>
-            <div id="blobsey-wrapper">
-                <div id="blobsey-card-back">
-                    <hr id="blobsey-divider" />
-                    {renderMarkdown(flashcard.card_back)}
-                </div>
-            </div>
-            <div id="blobsey-review-buttons">
-                <button onClick={onAnotherButtonClick}>Another</button>
-                <button onClick={onEditButtonClick}>Edit</button>
-                <button onClick={onConfirmButtonClick}>Confirm</button>
+            <hr className='w-full mb-2' />
+            <div className="flex flex-col items-center w-full">
+                {renderMarkdown(flashcard.card_back)}
             </div>
         </div>
+        <div className="flex flex-row mt-2 space-x-4">
+            <button onClick={onEditButtonClick}>
+                Edit
+            </button>
+            <button onClick={onConfirmButtonClick}>
+                Confirm
+            </button>
+            <button onClick={onAnotherButtonClick}>
+                Another
+            </button>
+        </div>
+        </>
     );
 };
 
