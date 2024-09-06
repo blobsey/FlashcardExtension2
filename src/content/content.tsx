@@ -1,16 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client'; 
 import Overlay from './Overlay';
-import { setPersistentState, getPersistentState } from '../utils/usePersistentState';
+import { getPersistentState } from '../common/usePersistentState';
 import {
   getUserData,
-  BlockedSite,
   takeScreenshotOfCallerTab,
   cacheNextFlashcard,
   trapFocus,
   handleFocusIn,
-  Flashcard
-} from './common';
+} from '../common/common';
+import { Flashcard, BlockedSite } from '../common/types';
 
 async function showFlashcardIfNeeded(): Promise<void> {
     const userData = await getUserData();

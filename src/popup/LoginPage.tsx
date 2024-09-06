@@ -1,6 +1,6 @@
 import React from 'react';
 
-import usePersistentState from '../utils/usePersistentState';
+import usePersistentState from '../common/usePersistentState';
 
 const LoginPage: React.FC = () => {
     const [apiBaseUrl, setApiBaseUrl] = usePersistentState('apiBaseUrl', '');

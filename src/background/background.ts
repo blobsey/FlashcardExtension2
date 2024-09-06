@@ -1,4 +1,4 @@
-import { getPersistentState, setPersistentState } from "../utils/usePersistentState";
+import { getPersistentState, setPersistentState } from "../common/usePersistentState";
 
 interface Message {
     action: string;
@@ -44,10 +44,7 @@ const messageHandlers: Record<string, MessageHandler> = {
             throw new Error("Caller tab must be the active tab to capture screenshot");
         }
 
-        const dataUrl = await browser.tabs.captureVisibleTab(
-            browser.windows.WINDOW_ID_CURRENT, 
-            { format: 'png' }
-        );
+        const dataUrl = await browser.tabs.captureVisibleTab();
         sendResponse({ result: 'success', screenshotUri: dataUrl });
     },
     'login': async (message, sender, sendResponse) => {
@@ -114,6 +111,20 @@ const messageHandlers: Record<string, MessageHandler> = {
             })
         });
         sendResponse({result: 'success', ...data});
+    },
+    'editFlashcard': async (message, sender, sendResponse) => {
+        const data = await handleApiRequest(`/edit/${message.card_id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                card_type: message.card_type,
+                card_front: message.card_front, 
+                card_back: message.card_back 
+            })
+        });
+        sendResponse({result: 'success', ...data})
     }
 }
 

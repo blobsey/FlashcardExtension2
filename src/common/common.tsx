@@ -1,36 +1,8 @@
 import React from "react";
-import { setPersistentState, getPersistentState } from "../utils/usePersistentState";
+import { setPersistentState, getPersistentState } from "./usePersistentState";
 import { marked } from 'marked';
+import { Flashcard, UserData } from "./types";
 import DOMPurify from 'dompurify';
-
-export interface BlockedSite {
-    url: string;
-    active: boolean;
-}
-
-export interface UserData {
-    max_new_cards: number;
-    deck: string;
-    decks: string[];
-    blocked_sites: BlockedSite[];
-}
-
-export interface ScreenProps {
-    goBack: () => void;
-    navigateTo: (path: string) => void;
-}
-
-export interface Flashcard {
-    user_id: string;
-    card_back: string;
-    card_front: string;
-    card_type: string;
-    last_review_date: string;
-    stability: number;
-    difficulty: number;
-    card_id: string;
-    review_date: string;
-}
 
 /* Utility function to fetch the latest userData from the API */
 export async function getUserData(): Promise<UserData> {
@@ -69,6 +41,36 @@ export async function cacheNextFlashcard(): Promise<void> {
     }
 
     await setPersistentState('flashcard', newFlashcard);
+}
+
+/* Utility function to call /edit path of API */
+export async function editFlashcard(
+    card_id: string, card_type: string, 
+    card_front: string, card_back: string): Promise<Flashcard> {
+        const response = await browser.runtime.sendMessage({
+            action: 'editFlashcard',
+            card_id,
+            card_type,
+            card_front,
+            card_back
+        });
+        return response.flashcard;
+}
+
+/* Utility function to call /review path of API */
+export async function reviewFlashcard(
+    grade: "again" | "hard" | "medium" | "easy", card_id: string): Promise<Flashcard> {
+        const gradeMap = { again: 1, hard: 2, medium: 3, easy: 4 };
+        const numericalGrade = gradeMap[grade];
+
+        const response = await browser.runtime.sendMessage({ 
+            action: 'reviewFlashcard', 
+            grade: numericalGrade,
+            card_id
+        });
+        cacheNextFlashcard();
+        
+        return response.flashcard;
 }
 
 /* Utility function to take a screenshot of the current tab. Will 

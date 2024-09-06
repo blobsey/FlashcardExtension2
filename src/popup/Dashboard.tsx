@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import usePersistentState from '../utils/usePersistentState';
+import usePersistentState from '../common/usePersistentState';
 
 const Dashboard: React.FC = () => {
 
