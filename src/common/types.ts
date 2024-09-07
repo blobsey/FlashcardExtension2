@@ -26,3 +26,4 @@ export interface Flashcard {
     card_id: string;
     review_date: string;
 }
+

@@ -66,7 +66,6 @@ tiles it to get rid of 'halo-effect' with cheap blur */
     background:rgba(255, 255, 255, 0.1);
     border: transparent;
     outline: none;
-    transition: background-color 0.1s, border-color 0.1s, color 0.1s;
     line-height: 24px;
 }
 

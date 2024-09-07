@@ -13,7 +13,7 @@ const FlashcardScreen: React.FC<FlashcardScreenProps> = ({
 }) => {
     return (
         <>
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center max-w-[60rem] mx-auto">
             <div className="mb-2 text-center">
                 {renderMarkdown(flashcard?.card_front)}
             </div>

@@ -4,6 +4,9 @@ import { marked } from 'marked';
 import { Flashcard, UserData } from "./types";
 import DOMPurify from 'dompurify';
 
+/* All possible grades that can be given to a reviewed flashcard */
+export const GRADES = Object.freeze(['Again', 'Hard', 'Good', 'Easy'] as const);
+
 /* Utility function to fetch the latest userData from the API */
 export async function getUserData(): Promise<UserData> {
     const { result, data } = await browser.runtime.sendMessage({ action: "getUserData" });
@@ -60,8 +63,8 @@ export async function editFlashcard(
 /* Utility function to call /review path of API */
 export async function reviewFlashcard(
     card_id: string,
-    grade: "again" | "hard" | "medium" | "easy"): Promise<Flashcard> {
-        const gradeMap = { again: 1, hard: 2, medium: 3, easy: 4 };
+    grade: typeof GRADES[number]): Promise<Flashcard> {
+        const gradeMap = { Again: 1, Hard: 2, Good: 3, Easy: 4 };
         const numericalGrade = gradeMap[grade];
 
         cacheNextFlashcard();

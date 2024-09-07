@@ -3,7 +3,7 @@ import FlashcardScreen from "./FlashcardScreen";
 import GradeScreen from "./GradeScreen";
 import usePersistentState from "../common/usePersistentState";
 import { Flashcard } from "../common/types";
-import { reviewFlashcard, editFlashcard } from "../common/common";
+import { reviewFlashcard, editFlashcard, GRADES } from "../common/common";
 import '../styles/tailwind.css';
 import ReviewScreen from "./ReviewScreen";
 
@@ -23,7 +23,7 @@ const Overlay: React.FC = () => {
     const [currentScreen, setCurrentScreen] = useState<Screen>('flashcard');
     const [screenHistory, setScreenHistory] = useState<Screen[]>(['flashcard']);
     const [isFlipped, setIsFlipped] = useState<boolean>(false);
-    const [localFlashcard, setLocalFlashcard] = useState<Flashcard | null>(null);
+    const [flashcardReviewed, setFlashcardReviewed] = useState<Flashcard | null>(null);
 
     const navigateTo = (screen: Screen) => {
         setScreenHistory(prev => [...prev, screen]);
@@ -45,30 +45,32 @@ const Overlay: React.FC = () => {
                 <FlashcardScreen
                     flashcard={flashcard}
                     onFlipPressed={() => {
-                        setLocalFlashcard(flashcard);
+                        setFlashcardReviewed(flashcard);
                         navigateTo('grade');
                     }}
                 />
             )}
-            {currentScreen === 'grade' && localFlashcard && (
+            {currentScreen === 'grade' && flashcardReviewed && (
                 <>
                     {screenHistory.length > 1 && <BackButton onClick={goBack} />}
                     <GradeScreen
-                        onGradeButtonClick={(grade: "again" | "hard" | "medium" | "easy") => {
-                            reviewFlashcard(localFlashcard.card_id, grade);
+                        onGradeButtonClick={(grade: typeof GRADES[number]) => {
+                            reviewFlashcard(flashcardReviewed.card_id, grade);
                             navigateTo('review');
                         }}
-                        flashcard={localFlashcard}
+                        flashcard={flashcardReviewed}
                         isFlipped={isFlipped}
                         setIsFlipped={setIsFlipped}
                     />
                 </>
             )}
-            {currentScreen === 'review' && localFlashcard && (
+            {currentScreen === 'review' && flashcardReviewed && (
                 <>
                     <ReviewScreen
-                    flashcard={localFlashcard}
-                    onEditButtonClick={() => {}}
+                    flashcard={flashcardReviewed}
+                    onEditButtonClick={() => {
+
+                    }}
                     onConfirmButtonClick={() => {}}
                     onAnotherButtonClick={() => {}}
                     />
