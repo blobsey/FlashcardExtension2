@@ -6,8 +6,9 @@ import { Flashcard } from "../common/types";
 import { reviewFlashcard, editFlashcard, GRADES } from "../common/common";
 import '../styles/tailwind.css';
 import ReviewScreen from "./ReviewScreen";
+import EditScreen from "./EditScreen";
 
-type Screen = 'flashcard' | 'grade' | 'review';
+type Screen = 'flashcard' | 'grade' | 'review' | 'edit';
 
 // BackButton component defined within Overlay.tsx
 const BackButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
@@ -19,11 +20,23 @@ const BackButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
 );
 
 const Overlay: React.FC = () => {
-    const [flashcard, setFlashcard] = usePersistentState<Flashcard | null>('flashcard', null);
-    const [currentScreen, setCurrentScreen] = useState<Screen>('flashcard');
+    // Global states
+    const [currentScreen, setCurrentScreen] = useState<Screen>('edit');
     const [screenHistory, setScreenHistory] = useState<Screen[]>(['flashcard']);
-    const [isFlipped, setIsFlipped] = useState<boolean>(false);
+
+    // FlashcardScreen states
+    const [flashcard, setFlashcard] = usePersistentState<Flashcard | null>('flashcard', null);
+
+    // GradeScreen/ReviewScreen states
     const [flashcardReviewed, setFlashcardReviewed] = useState<Flashcard | null>(null);
+    const [isFlipAnimationDone, setIsFlipAnimationDone] = useState<boolean>(false);
+    const [isReviewAnimationDone, setIsReviewAnimationDone] = useState<boolean>(false);
+
+    // EditScreen state
+    const [editingFlashcard, setEditingFlashcard] = useState<Partial<Flashcard>>({
+        card_front: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.',
+        card_back: 'It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.'
+    });
 
     const navigateTo = (screen: Screen) => {
         setScreenHistory(prev => [...prev, screen]);
@@ -59,20 +72,41 @@ const Overlay: React.FC = () => {
                             navigateTo('review');
                         }}
                         flashcard={flashcardReviewed}
-                        isFlipped={isFlipped}
-                        setIsFlipped={setIsFlipped}
+                        isFlipAnimationDone={isFlipAnimationDone}
+                        setIsFlipAnimationDone={setIsFlipAnimationDone}
                     />
                 </>
             )}
             {currentScreen === 'review' && flashcardReviewed && (
                 <>
+                    {screenHistory.length > 1 && <BackButton onClick={goBack} />}
                     <ReviewScreen
-                    flashcard={flashcardReviewed}
-                    onEditButtonClick={() => {
-
-                    }}
-                    onConfirmButtonClick={() => {}}
-                    onAnotherButtonClick={() => {}}
+                        flashcard={flashcardReviewed}
+                        onEditButtonClick={() => {
+                            setEditingFlashcard(flashcardReviewed);
+                            navigateTo('edit');
+                        }}
+                        onConfirmButtonClick={() => {}}
+                        onAnotherButtonClick={() => {
+                            setIsFlipAnimationDone(false);
+                            setIsReviewAnimationDone(false);
+                            navigateTo('flashcard');
+                        }}
+                        isReviewAnimationDone={isReviewAnimationDone}
+                        setIsReviewAnimationDone={setIsReviewAnimationDone}
+                    />
+                </>
+            )}
+            {currentScreen === 'edit' && editingFlashcard && (
+                <>
+                    {screenHistory.length > 1 && <BackButton onClick={goBack} />}
+                    <EditScreen
+                        flashcard={editingFlashcard}
+                        setFlashcard={setEditingFlashcard}
+                        onSaveButtonClicked={async () => {
+                            goBack();
+                        }}
+                        onCancelButtonClicked={goBack}
                     />
                 </>
             )}

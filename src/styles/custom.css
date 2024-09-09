@@ -53,6 +53,7 @@ tiles it to get rid of 'halo-effect' with cheap blur */
     margin: .5em auto .5em auto;
 }
 
+/* Mostly aesthetic styles past this point */
 #blobsey-overlay button {
     display: flex;
     justify-content: center;
@@ -66,7 +67,8 @@ tiles it to get rid of 'halo-effect' with cheap blur */
     background:rgba(255, 255, 255, 0.1);
     border: transparent;
     outline: none;
-    line-height: 24px;
+    height: 2rem;
+    line-height: 1.25rem;
 }
 
 #blobsey-overlay button:hover {
@@ -76,6 +78,7 @@ tiles it to get rid of 'halo-effect' with cheap blur */
 #blobsey-overlay button:focus {
     color: rgba(255, 255, 255, 1);
     outline: 1px solid rgba(255, 255, 255, .75);
+    outline-offset: -1px;
 }
 
 #blobsey-overlay button:disabled {
@@ -95,30 +98,64 @@ tiles it to get rid of 'halo-effect' with cheap blur */
     padding: 2px 3px;
 }
 
+#blobsey-overlay textarea {
+    color: #d1d5db;
+    font-family: monospace;
+    background-color: transparent;
+    overflow-y: auto;
+    display: block;
+    white-space: pre-wrap;
+    resize: none;
+    line-height: 1.25rem;
+}
+
+#blobsey-overlay textarea:focus {
+    outline: none;
+}
+
 #blobsey-overlay hr {
-    width: 90%;
+    width: min(30rem, 80%);
     border: 0;
     height: 0;
     outline: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.blobsey-back-button {
+#blobsey-overlay .blobsey-back-button {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0px;
+    left: 0px;
+    width: 3rem;
+    height: 3rem;
     background: none;
     border: none;
+    border-radius: 0;
     cursor: pointer;
     padding: 8px;
+    opacity: .5;
     transition: opacity 0.2s ease-in-out;
 }
 
-.blobsey-back-button:hover {
-    opacity: 0.7;
+#blobsey-overlay .blobsey-back-button:hover {
+    opacity: 1;
 }
 
-.blobsey-back-button svg {
+#blobsey-overlay .blobsey-back-button:focus {
+    opacity: 1;
+}
+
+#blobsey-overlay .blobsey-back-button svg {
     width: 24px;
     height: 24px;
     fill: currentColor;
+}
+
+.has-underline::after {
+    content: '';
+    position: absolute;
+    display: block;
+    bottom: -1px;
+    left: 2rem;
+    width: calc(100% - 4rem);
+    height: 1px;
+    background-color: rgba(255, 255, 255, .15);
 }

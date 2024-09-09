@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { renderMarkdown } from '../common/common';
 import { Flashcard } from '../common/types';
 
@@ -7,6 +7,8 @@ interface ReviewScreenProps {
     onEditButtonClick: () => void;
     onConfirmButtonClick: () => void;
     onAnotherButtonClick: () => void;
+    isReviewAnimationDone: boolean;
+    setIsReviewAnimationDone: (isPlayed: boolean) => void;
 }
 
 const ReviewScreen: React.FC<ReviewScreenProps> = ({
@@ -14,29 +16,25 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({
     onEditButtonClick,
     onConfirmButtonClick,
     onAnotherButtonClick,
+    isReviewAnimationDone,
+    setIsReviewAnimationDone,
 }) => {
-    const [isNewFlashcard, setIsNewFlashcard] = useState(false);
-
     useEffect(() => {
-        if (flashcard) {
-            setIsNewFlashcard(false);
-            const timer = setTimeout(() => setIsNewFlashcard(true), 50);
-            return () => clearTimeout(timer);
-        }
-    }, [flashcard]);
+        requestAnimationFrame(() => setIsReviewAnimationDone(true));
+    }, [setIsReviewAnimationDone]);
 
     return (
         <>
-        <div className="flex flex-col items-center max-w-[60rem] mx-auto">
-            <div className="m-2 text-center w-full">
+        <div className="flex flex-col items-center max-w-[45rem] mx-auto">
+            <div className="mb-4 text-center w-full">
                 {renderMarkdown(flashcard?.card_front)}
             </div>
-            <hr className='w-full m-4' />
-            <div className="flex flex-col items-center w-full">
+            <div className="flex flex-col items-center overflow-hidden w-full">
+                <hr className='w-full'/>
                 {renderMarkdown(flashcard?.card_back)}
             </div>
         </div>
-        <div className={`flex flex-row mt-4 space-x-4 ${isNewFlashcard ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
+        <div className={`flex flex-row mt-4 space-x-4 ${isReviewAnimationDone ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
             {Object.entries({
                 Another: onAnotherButtonClick,
                 Confirm: onConfirmButtonClick,
@@ -45,7 +43,7 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({
                 <button
                     key={label}
                     onClick={onClick}
-                    className={`transition-[transform,opacity] duration-300 ${isNewFlashcard 
+                    className={`transition-[transform,opacity] duration-300 ${isReviewAnimationDone 
                         ? 'translate-y-0 opacity-100' 
                         : 'translate-y-4 opacity-0'
                     } hover:bg-gray-200`}
