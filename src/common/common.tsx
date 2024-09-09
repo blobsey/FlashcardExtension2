@@ -57,6 +57,12 @@ export async function editFlashcard(
             card_front,
             card_back
         });
+
+        const flashcard = await getPersistentState<Flashcard>('flashcard');
+
+        if (flashcard?.card_id === card_id) {
+            await setPersistentState('flashcard', response.flashcard);
+        }
         return response.flashcard;
 }
 

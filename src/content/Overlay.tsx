@@ -21,22 +21,19 @@ const BackButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
 
 const Overlay: React.FC = () => {
     // Global states
-    const [currentScreen, setCurrentScreen] = useState<Screen>('edit');
+    const [currentScreen, setCurrentScreen] = useState<Screen>('flashcard');
     const [screenHistory, setScreenHistory] = useState<Screen[]>(['flashcard']);
 
     // FlashcardScreen states
     const [flashcard, setFlashcard] = usePersistentState<Flashcard | null>('flashcard', null);
 
     // GradeScreen/ReviewScreen states
-    const [flashcardReviewed, setFlashcardReviewed] = useState<Flashcard | null>(null);
+    const [reviewingFlashcard, setReviewingFlashcard] = useState<Flashcard | null>(null);
     const [isFlipAnimationDone, setIsFlipAnimationDone] = useState<boolean>(false);
     const [isReviewAnimationDone, setIsReviewAnimationDone] = useState<boolean>(false);
 
     // EditScreen state
-    const [editingFlashcard, setEditingFlashcard] = useState<Partial<Flashcard>>({
-        card_front: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.',
-        card_back: 'It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.'
-    });
+    const [editingFlashcard, setEditingFlashcard] = useState<Partial<Flashcard>>({});
 
     const navigateTo = (screen: Screen) => {
         setScreenHistory(prev => [...prev, screen]);
@@ -58,32 +55,32 @@ const Overlay: React.FC = () => {
                 <FlashcardScreen
                     flashcard={flashcard}
                     onFlipPressed={() => {
-                        setFlashcardReviewed(flashcard);
+                        setReviewingFlashcard(flashcard);
                         navigateTo('grade');
                     }}
                 />
             )}
-            {currentScreen === 'grade' && flashcardReviewed && (
+            {currentScreen === 'grade' && reviewingFlashcard && (
                 <>
                     {screenHistory.length > 1 && <BackButton onClick={goBack} />}
                     <GradeScreen
                         onGradeButtonClick={(grade: typeof GRADES[number]) => {
-                            reviewFlashcard(flashcardReviewed.card_id, grade);
+                            reviewFlashcard(reviewingFlashcard.card_id, grade);
                             navigateTo('review');
                         }}
-                        flashcard={flashcardReviewed}
+                        flashcard={reviewingFlashcard}
                         isFlipAnimationDone={isFlipAnimationDone}
                         setIsFlipAnimationDone={setIsFlipAnimationDone}
                     />
                 </>
             )}
-            {currentScreen === 'review' && flashcardReviewed && (
+            {currentScreen === 'review' && reviewingFlashcard && (
                 <>
                     {screenHistory.length > 1 && <BackButton onClick={goBack} />}
                     <ReviewScreen
-                        flashcard={flashcardReviewed}
+                        flashcard={reviewingFlashcard}
                         onEditButtonClick={() => {
-                            setEditingFlashcard(flashcardReviewed);
+                            setEditingFlashcard(reviewingFlashcard);
                             navigateTo('edit');
                         }}
                         onConfirmButtonClick={() => {}}
@@ -101,10 +98,27 @@ const Overlay: React.FC = () => {
                 <>
                     {screenHistory.length > 1 && <BackButton onClick={goBack} />}
                     <EditScreen
-                        flashcard={editingFlashcard}
-                        setFlashcard={setEditingFlashcard}
+                        flashcard={reviewingFlashcard}
+                        setFlashcard={(updates: Partial<Flashcard> | null) => {
+                            // Ugly, but this function is to reconcile the difference
+                            // between a Partial<Flashcard> and a Flashcard
+                            setReviewingFlashcard(prevFlashcard => {
+                                if (!prevFlashcard) return null;
+                                return { ...prevFlashcard, ...updates } as Flashcard;
+                            });
+                        }}
                         onSaveButtonClicked={async () => {
-                            goBack();
+                            if (reviewingFlashcard) {
+                                await editFlashcard(
+                                    reviewingFlashcard.card_id,
+                                    reviewingFlashcard.card_type,
+                                    reviewingFlashcard.card_front,
+                                    reviewingFlashcard.card_back
+                                )
+                                goBack();
+                            } else {
+                                throw new Error('Missing required fields for editing flashcard');
+                            }
                         }}
                         onCancelButtonClicked={goBack}
                     />

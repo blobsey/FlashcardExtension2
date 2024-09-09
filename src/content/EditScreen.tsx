@@ -3,8 +3,8 @@ import { Flashcard } from '../common/types';
 import FlashcardEditorWidget from './FlashcardEditorWidget';
 
 interface EditScreenProps {
-    flashcard: Partial<Flashcard>;
-    setFlashcard: (flashcard: Partial<Flashcard>) => void;
+    flashcard: Partial<Flashcard> | null;
+    setFlashcard: (flashcard: Partial<Flashcard> | null) => void;
     onSaveButtonClicked: () => Promise<Flashcard | void>;
     onCancelButtonClicked? : () => void;
 }

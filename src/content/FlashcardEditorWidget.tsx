@@ -3,8 +3,8 @@ import { Flashcard } from '../common/types';
 import { renderMarkdown } from '../common/common';
 
 interface FlashcardEditorWidgetProps {
-    flashcard: Partial<Flashcard>;
-    setFlashcard: (flashcard: Partial<Flashcard>) => void;
+    flashcard: Partial<Flashcard> | null;
+    setFlashcard: (flashcard: Partial<Flashcard> | null) => void;
     isPreviewEnabled: boolean;
     isCollapsed?: boolean;
     setIsCollapsed?: (isCollapsed: boolean) => void;
@@ -146,7 +146,7 @@ const FlashcardEditorWidget: React.FC<FlashcardEditorWidgetProps> = ({
                     }}
                 >
                     <textarea
-                        value={flashcard.card_front ?? ''}
+                        value={flashcard?.card_front ?? ''}
                         onChange={(e) => setFlashcard({ ...flashcard, card_front: e.target.value })}
                         className="w-full h-full resize-none p-4 text-wrap"
                         placeholder="Front of the card"
@@ -161,7 +161,7 @@ const FlashcardEditorWidget: React.FC<FlashcardEditorWidgetProps> = ({
                     style={{ width: isPreviewEnabled ? `${(1 - splitRatio) * 100}%` : '0' }}
                 >
                     <div className="h-full p-4 text-wrap overflow-y-auto overflow-x-hidden">
-                        {renderMarkdown(flashcard.card_front)}
+                        {renderMarkdown(flashcard?.card_front)}
                     </div>
                 </div>
             </div>
@@ -177,7 +177,7 @@ const FlashcardEditorWidget: React.FC<FlashcardEditorWidgetProps> = ({
                     }}
                 >
                     <textarea
-                        value={flashcard.card_back ?? ''}
+                        value={flashcard?.card_back ?? ''}
                         onChange={(e) => setFlashcard({ ...flashcard, card_back: e.target.value })}
                         className="w-full h-full resize-none p-4"
                         placeholder="Back of the card"
@@ -194,7 +194,7 @@ const FlashcardEditorWidget: React.FC<FlashcardEditorWidgetProps> = ({
                     }}
                 >
                     <div className="h-full p-4 text-wrap overflow-y-auto overflow-x-hidden">
-                        {renderMarkdown(flashcard.card_back)}
+                        {renderMarkdown(flashcard?.card_back)}
                     </div>
                 </div>
             </div>
