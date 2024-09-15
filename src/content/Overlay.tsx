@@ -7,6 +7,7 @@ import { reviewFlashcard, editFlashcard, GRADES, BackButton } from "../common/co
 import '../styles/tailwind.css';
 import ReviewScreen from "./ReviewScreen";
 import EditScreen from "./EditScreen";
+import { ToastProvider, useToast } from "./Toast";
 
 type Screen = 'flashcard' | 'grade' | 'review' | 'edit';
 
@@ -27,6 +28,9 @@ const Overlay: React.FC = () => {
     // EditScreen state
     const [editingFlashcard, setEditingFlashcard] = useState<Partial<Flashcard>>({});
 
+    // Toasts for showing info, errors, etc.
+    const toast = useToast();
+
     const navigateTo = (screen: Screen) => {
         setScreenHistory(prev => [...prev, screen]);
         setCurrentScreen(screen);
@@ -44,13 +48,24 @@ const Overlay: React.FC = () => {
     return (
         <div id='blobsey-overlay'>
             {currentScreen === 'flashcard' && (
-                <FlashcardScreen
-                    flashcard={flashcard}
-                    onFlipPressed={() => {
-                        setReviewingFlashcard(flashcard);
-                        navigateTo('grade');
-                    }}
-                />
+                <>
+                    <FlashcardScreen
+                        flashcard={flashcard}
+                        onFlipPressed={() => {
+                            setReviewingFlashcard(flashcard);
+                            navigateTo('grade');
+                        }}
+                    />
+                    <button
+                        onClick={() => toast({
+                            content: "This is a test toast!",
+                            duration: 5000
+                        })}
+                        className="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                        Show Toast
+                    </button>
+                </>
             )}
             {currentScreen === 'grade' && reviewingFlashcard && (
                 <>
@@ -100,16 +115,25 @@ const Overlay: React.FC = () => {
                             });
                         }}
                         onSaveButtonClicked={async () => {
-                            if (reviewingFlashcard) {
-                                await editFlashcard(
-                                    reviewingFlashcard.card_id,
-                                    reviewingFlashcard.card_type,
-                                    reviewingFlashcard.card_front,
-                                    reviewingFlashcard.card_back
-                                )
-                                goBack();
-                            } else {
-                                throw new Error('Missing required fields for editing flashcard');
+                            try {
+                                if (reviewingFlashcard) {
+                                    await editFlashcard(
+                                        reviewingFlashcard.card_id,
+                                        reviewingFlashcard.card_type,
+                                        reviewingFlashcard.card_front,
+                                        reviewingFlashcard.card_back
+                                    )
+                                    goBack();
+                                    toast({content: "Flashcard updated successfully!",
+                                        duration: 10000
+                                    });
+                                } else {
+                                    toast({content: "Missing required fields!"});
+                                    throw new Error('Missing required fields!');
+                                }
+                            }
+                            catch (error) {
+                                toast({content: `Error editing flashcard: ${error}`});
                             }
                         }}
                         onCancelButtonClicked={goBack}

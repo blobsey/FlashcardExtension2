@@ -10,6 +10,7 @@ import {
   handleFocusIn,
 } from '../common/common';
 import { Flashcard, BlockedSite } from '../common/types';
+import { ToastProvider } from './Toast';
 
 async function showFlashcardIfNeeded(): Promise<void> {
     const userData = await getUserData();
@@ -90,7 +91,11 @@ async function createOverlayIfNotExists(): Promise<void> {
     document.addEventListener('focusin', handleFocusIn);
 
     const root = ReactDOM.createRoot(shadowRoot); // Create root
-    root.render(<Overlay />);
+    root.render(
+        <ToastProvider>
+            <Overlay />
+        </ToastProvider>
+    );
 }
 
 async function destroyOverlayIfExists(): Promise<void> {

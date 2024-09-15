@@ -9,6 +9,7 @@
     "nuke": "rimraf node_modules && npm install"
   },
   "dependencies": {
+    "@radix-ui/react-toast": "^1.2.1",
     "dompurify": "^3.1.6",
     "marked": "^11.1.0",
     "react": "^18.2.0",
