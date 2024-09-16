@@ -48,97 +48,75 @@ const Overlay: React.FC = () => {
     return (
         <div id='blobsey-overlay'>
             {currentScreen === 'flashcard' && (
-                <>
-                    <FlashcardScreen
-                        flashcard={flashcard}
-                        onFlipPressed={() => {
-                            setReviewingFlashcard(flashcard);
-                            navigateTo('grade');
-                        }}
-                    />
-                    <button
-                        onClick={() => toast({
-                            content: "This is a test toast!",
-                            duration: 5000
-                        })}
-                        className="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                    >
-                        Show Toast
-                    </button>
-                </>
+                <FlashcardScreen
+                    flashcard={flashcard}
+                    onFlipPressed={() => {
+                        setReviewingFlashcard(flashcard);
+                        navigateTo('grade');
+                    }}
+                />
             )}
             {currentScreen === 'grade' && reviewingFlashcard && (
-                <>
-                    {screenHistory.length > 1 && <BackButton onClick={goBack} />}
-                    <GradeScreen
-                        onGradeButtonClick={(grade: typeof GRADES[number]) => {
-                            reviewFlashcard(reviewingFlashcard.card_id, grade);
-                            navigateTo('review');
-                        }}
-                        flashcard={reviewingFlashcard}
-                        isFlipAnimationDone={isFlipAnimationDone}
-                        setIsFlipAnimationDone={setIsFlipAnimationDone}
-                    />
-                </>
+                <GradeScreen
+                    onGradeButtonClick={(grade: typeof GRADES[number]) => {
+                        reviewFlashcard(reviewingFlashcard.card_id, grade);
+                        navigateTo('review');
+                    }}
+                    flashcard={reviewingFlashcard}
+                    isFlipAnimationDone={isFlipAnimationDone}
+                    setIsFlipAnimationDone={setIsFlipAnimationDone}
+                />
             )}
             {currentScreen === 'review' && reviewingFlashcard && (
-                <>
-                    {screenHistory.length > 1 && <BackButton onClick={goBack} />}
-                    <ReviewScreen
-                        flashcard={reviewingFlashcard}
-                        onEditButtonClick={() => {
-                            setEditingFlashcard(reviewingFlashcard);
-                            navigateTo('edit');
-                        }}
-                        onConfirmButtonClick={() => {}}
-                        onAnotherButtonClick={() => {
-                            setIsFlipAnimationDone(false);
-                            setIsReviewAnimationDone(false);
-                            navigateTo('flashcard');
-                        }}
-                        isReviewAnimationDone={isReviewAnimationDone}
-                        setIsReviewAnimationDone={setIsReviewAnimationDone}
-                    />
-                </>
+                <ReviewScreen
+                    flashcard={reviewingFlashcard}
+                    onEditButtonClick={() => {
+                        setEditingFlashcard(reviewingFlashcard);
+                        navigateTo('edit');
+                    }}
+                    onConfirmButtonClick={() => {}}
+                    onAnotherButtonClick={() => {
+                        setIsFlipAnimationDone(false);
+                        setIsReviewAnimationDone(false);
+                        navigateTo('flashcard');
+                    }}
+                    isReviewAnimationDone={isReviewAnimationDone}
+                    setIsReviewAnimationDone={setIsReviewAnimationDone}
+                />
             )}
             {currentScreen === 'edit' && editingFlashcard && (
-                <>
-                    {screenHistory.length > 1 && <BackButton onClick={goBack} />}
-                    <EditScreen
-                        flashcard={reviewingFlashcard}
-                        setFlashcard={(updates: Partial<Flashcard> | null) => {
-                            // Ugly, but this function is to reconcile the difference
-                            // between a Partial<Flashcard> and a Flashcard
-                            setReviewingFlashcard(prevFlashcard => {
-                                if (!prevFlashcard) return null;
-                                return { ...prevFlashcard, ...updates } as Flashcard;
-                            });
-                        }}
-                        onSaveButtonClicked={async () => {
-                            try {
-                                if (reviewingFlashcard) {
-                                    await editFlashcard(
-                                        reviewingFlashcard.card_id,
-                                        reviewingFlashcard.card_type,
-                                        reviewingFlashcard.card_front,
-                                        reviewingFlashcard.card_back
-                                    )
-                                    goBack();
-                                    toast({content: "Flashcard updated successfully!",
-                                        duration: 10000
-                                    });
-                                } else {
-                                    toast({content: "Missing required fields!"});
-                                    throw new Error('Missing required fields!');
-                                }
+                <EditScreen
+                    flashcard={{...reviewingFlashcard}}
+                    setFlashcard={(updates: Partial<Flashcard> | null) => {
+                        // Ugly, but this function is to reconcile the difference
+                        // between a Partial<Flashcard> and a Flashcard
+                        setReviewingFlashcard(prevFlashcard => {
+                            if (!prevFlashcard) return null;
+                            return { ...prevFlashcard, ...updates } as Flashcard;
+                        });
+                    }}
+                    onSaveButtonClicked={async (updatedFlashcard: Partial<Flashcard> | null) => {
+                        try {
+                            if (updatedFlashcard && updatedFlashcard.card_id) {
+                                await editFlashcard(
+                                    updatedFlashcard.card_id,
+                                    updatedFlashcard.card_type || '',
+                                    updatedFlashcard.card_front || '',
+                                    updatedFlashcard.card_back || ''
+                                )
+                                goBack();
+                                toast({content: "Flashcard updated successfully!"});
+                            } else {
+                                toast({content: "Missing required fields!"});
+                                throw new Error('Missing required fields!');
                             }
-                            catch (error) {
-                                toast({content: `Error editing flashcard: ${error}`});
-                            }
-                        }}
-                        onCancelButtonClicked={goBack}
-                    />
-                </>
+                        }
+                        catch (error) {
+                            toast({content: `Error editing flashcard: ${error}`});
+                        }
+                    }}
+                    onCancelButtonClicked={goBack}
+                />
             )}
         </div>
     );

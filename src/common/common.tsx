@@ -58,6 +58,9 @@ export async function editFlashcard(
             card_back
         });
 
+        if (response.result !== 'success') 
+            throw new Error(`Error editing flashcard: ${JSON.stringify(response)}`);
+
         const flashcard = await getPersistentState<Flashcard>('flashcard');
 
         if (flashcard?.card_id === card_id) {

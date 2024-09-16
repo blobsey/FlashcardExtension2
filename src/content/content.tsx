@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client'; 
+import ReactDOM, { Root } from 'react-dom/client'; 
 import Overlay from './Overlay';
 import { getPersistentState } from '../common/usePersistentState';
 import {
@@ -11,6 +11,9 @@ import {
 } from '../common/common';
 import { Flashcard, BlockedSite } from '../common/types';
 import { ToastProvider } from './Toast';
+
+// Global reference to a React root created through createRoot(), used for destroying the overlay.
+let overlayRoot: Root | null = null;
 
 async function showFlashcardIfNeeded(): Promise<void> {
     const userData = await getUserData();
@@ -90,8 +93,8 @@ async function createOverlayIfNotExists(): Promise<void> {
     document.addEventListener('keydown', trapFocus);
     document.addEventListener('focusin', handleFocusIn);
 
-    const root = ReactDOM.createRoot(shadowRoot); // Create root
-    root.render(
+    overlayRoot = ReactDOM.createRoot(shadowRoot); // Create root
+    overlayRoot.render(
         <ToastProvider>
             <Overlay />
         </ToastProvider>
@@ -106,7 +109,14 @@ async function destroyOverlayIfExists(): Promise<void> {
             if (background) {
                 await background.animate({ opacity: [1, 0] }, { duration: 250, easing: 'ease' }).finished;
             }
+
+            // Attempt to unmount any existing React root
+            if (overlayRoot) {
+                overlayRoot.unmount();
+                overlayRoot = null;
+            }
         }
+
         host.remove();
 
         // Restore original scrolling behavior

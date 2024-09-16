@@ -34,7 +34,6 @@ browser.runtime.onMessage.addListener((
 
 const messageHandlers: Record<string, MessageHandler> = {
     'screenshotCurrentTab': async (message, sender, sendResponse) => {
-        console.log(sender);
         if (!sender.tab || !sender.tab.active) {
             throw new Error("Caller tab must be the active tab to capture screenshot");
         }
