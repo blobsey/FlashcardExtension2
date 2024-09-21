@@ -1,13 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FlashcardScreen from "./FlashcardScreen";
 import GradeScreen from "./GradeScreen";
 import usePersistentState from "../common/usePersistentState";
 import { Flashcard } from "../common/types";
-import { reviewFlashcard, editFlashcard, GRADES, BackButton } from "../common/common";
+import { reviewFlashcard, 
+        editFlashcard, 
+        GRADES, 
+        BackButton,
+        grantTime,
+        closeOverlayAllTabs
+} from "../common/common";
 import '../styles/tailwind.css';
 import ReviewScreen from "./ReviewScreen";
 import EditScreen from "./EditScreen";
 import { ToastProvider, useToast } from "./Toast";
+import { destroyOverlayIfExists } from './content';
 
 type Screen = 'flashcard' | 'grade' | 'review' | 'edit';
 
@@ -60,6 +67,7 @@ const Overlay: React.FC = () => {
                 <GradeScreen
                     onGradeButtonClick={(grade: typeof GRADES[number]) => {
                         reviewFlashcard(reviewingFlashcard.card_id, grade);
+                        grantTime(1000);
                         navigateTo('review');
                     }}
                     flashcard={reviewingFlashcard}
@@ -74,7 +82,10 @@ const Overlay: React.FC = () => {
                         setEditingFlashcard(reviewingFlashcard);
                         navigateTo('edit');
                     }}
-                    onConfirmButtonClick={() => {}}
+                    onConfirmButtonClick={async () => {
+                        await 
+                        await closeOverlayAllTabs();
+                    }}
                     onAnotherButtonClick={() => {
                         setIsFlipAnimationDone(false);
                         setIsReviewAnimationDone(false);

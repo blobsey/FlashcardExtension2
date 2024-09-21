@@ -4,6 +4,15 @@ import { marked } from 'marked';
 import { Flashcard, UserData } from "./types";
 import DOMPurify from 'dompurify';
 
+/* Works with a storage listener in content.tsx to send a message to all tabs
+without having to go through background script. A bit hacky :P */
+export async function closeOverlayAllTabs() {
+    await browser.storage.local.set({
+        'closeOverlaySignal': true
+    });
+    await browser.storage.local.remove('closeOverlaySignal');
+}
+
 /* All possible grades that can be given to a reviewed flashcard */
 export const GRADES = Object.freeze(['Again', 'Hard', 'Good', 'Easy'] as const);
 
@@ -166,6 +175,30 @@ export function renderMarkdown(text: string | null | undefined): React.ReactElem
             dangerouslySetInnerHTML={{ __html: sanitizedHtml }} 
         />
     )
+}
+
+/* Utility function which adds milliseconds to the 'existingTimeGrant' (stored 
+in browser.storage.local) which is the current amount of 'unredeemed' time. 
+'Unredeemed' time is time accrued before hitting the 'Confirm' button. The 
+Confirm button 'redeems' the time and starts counting down. */
+export async function grantTime(time: number) {
+    const existingTimeGrant = await getPersistentState<number>('existingTimeGrant') ?? 0;
+    await setPersistentState('existingTimeGrant', existingTimeGrant + time);
+}
+
+/* Utility function to 'redeem' time. Calculates the nextFlashcardTime by adding
+existingTimeGrant to the nextFlashcardTime, or Date.now() (whichever is later).
+This handles the case where the nextFlashcardTime can be passed by a long time, 
+such as when the user closes the browser for a while */
+export async function redeemExistingTimeGrant() {
+    const existingTimeGrant = await getPersistentState<number>('existingTimeGrant') ?? 0;
+    const currentTime = Date.now();
+    let baseTime = await getPersistentState<number>('nextFlashcardTime') ?? currentTime;
+    if (baseTime < currentTime) {
+        baseTime = currentTime;
+    }
+    setPersistentState('nextFlashcardTime', baseTime + existingTimeGrant);
+    setPersistentState('existingTimeGrant', 0);
 }
 
 /* Components */

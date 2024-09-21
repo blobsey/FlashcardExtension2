@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM, { Root } from 'react-dom/client'; 
 import Overlay from './Overlay';
-import { getPersistentState } from '../common/usePersistentState';
+import { getPersistentState, setPersistentState } from '../common/usePersistentState';
 import {
   getUserData,
   takeScreenshotOfCallerTab,
@@ -13,7 +13,7 @@ import { Flashcard, BlockedSite } from '../common/types';
 import { ToastProvider } from './Toast';
 
 // Global reference to a React root created through createRoot(), used for destroying the overlay.
-let overlayRoot: Root | null = null;
+export let overlayRoot: Root | null = null;
 
 async function showFlashcardIfNeeded(): Promise<void> {
     const userData = await getUserData();
@@ -101,7 +101,8 @@ async function createOverlayIfNotExists(): Promise<void> {
     );
 }
 
-async function destroyOverlayIfExists(): Promise<void> {
+// Export the destroyOverlayIfExists function
+export async function destroyOverlayIfExists(): Promise<void> {
     const host = document.getElementById('blobsey-host');
     if (host) {
         if (host.shadowRoot) {
@@ -126,6 +127,7 @@ async function destroyOverlayIfExists(): Promise<void> {
         // Clean up listeners
         document.removeEventListener('keydown', trapFocus);
         document.removeEventListener('focusin', handleFocusIn);
+        browser.storage.onChanged.removeListener(handleOverlayCloseSignal);
     }
 
     if (window.location.href.includes('blank.html')) {
@@ -136,7 +138,21 @@ async function destroyOverlayIfExists(): Promise<void> {
 async function init() {
     await destroyOverlayIfExists();
     await showFlashcardIfNeeded();
+
+    // Overlay is closed using browser messages only
+    browser.storage.onChanged.addListener(handleOverlayCloseSignal);
 }
+
+/* Handles 'messages' sent by closeOverlayAllTabs() in common.tsx
+'messages' are a storage key getting set/unset immediately */
+const handleOverlayCloseSignal = async (
+    changes: { [key: string]: browser.storage.StorageChange }, 
+    areaName: string) => {
+        if (areaName === 'local' && 
+            changes.closeOverlaySignal?.newValue === true) {
+                await destroyOverlayIfExists();
+        }
+};
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

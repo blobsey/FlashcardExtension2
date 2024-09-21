@@ -37,12 +37,14 @@ const EditScreen: React.FC<EditScreenProps> = ({
     };
 
     const handleSave = async () => {
+        // Save flashcard state before writing it to the prop flashcard
         const initialFlashcard = {...flashcard};
         try {
             setFlashcard(localFlashcard);
             await onSaveButtonClicked(localFlashcard);
         }
         catch(error) {
+            // If something went wrong with saving, restore the prop flashcard
             setFlashcard(initialFlashcard);
             throw error;
         }
