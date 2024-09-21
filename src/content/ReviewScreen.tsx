@@ -3,7 +3,8 @@ import { renderMarkdown } from '../common/common';
 import { Flashcard } from '../common/types';
 
 interface ReviewScreenProps {
-    flashcard?: Flashcard;
+    flashcard?: Flashcard | null;
+    areFlashcardsRemaining: boolean;
     onEditButtonClick: () => void;
     onConfirmButtonClick: () => void;
     onAnotherButtonClick: () => void;
@@ -13,6 +14,7 @@ interface ReviewScreenProps {
 
 const ReviewScreen: React.FC<ReviewScreenProps> = ({
     flashcard,
+    areFlashcardsRemaining,
     onEditButtonClick,
     onConfirmButtonClick,
     onAnotherButtonClick,
@@ -34,12 +36,19 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({
                 {renderMarkdown(flashcard?.card_back)}
             </div>
         </div>
+        {!areFlashcardsRemaining && 
+        <div>
+            {'No more flashcards to review today! :)'}
+        </div>
+        }
         <div className={`flex flex-row mt-4 space-x-4 ${isReviewAnimationDone ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
             {Object.entries({
                 Another: onAnotherButtonClick,
                 Confirm: onConfirmButtonClick,
                 Edit: onEditButtonClick,
             }).map(([label, onClick], index) => (
+                // Only show 'Another' if flashcards remaining
+                (label !== 'Another' || areFlashcardsRemaining) &&
                 <button
                     key={label}
                     onClick={onClick}

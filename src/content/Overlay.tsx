@@ -8,7 +8,8 @@ import { reviewFlashcard,
         GRADES, 
         BackButton,
         grantTime,
-        closeOverlayAllTabs
+        closeOverlayAllTabs,
+        redeemExistingTimeGrant
 } from "../common/common";
 import '../styles/tailwind.css';
 import ReviewScreen from "./ReviewScreen";
@@ -18,6 +19,7 @@ import { destroyOverlayIfExists } from './content';
 
 type Screen = 'flashcard' | 'grade' | 'review' | 'edit';
 
+const artificialDelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const Overlay: React.FC = () => {
     // Global states
@@ -65,9 +67,9 @@ const Overlay: React.FC = () => {
             )}
             {currentScreen === 'grade' && reviewingFlashcard && (
                 <GradeScreen
-                    onGradeButtonClick={(grade: typeof GRADES[number]) => {
-                        reviewFlashcard(reviewingFlashcard.card_id, grade);
-                        grantTime(1000);
+                    onGradeButtonClick={async (grade: typeof GRADES[number]) => {
+                        await reviewFlashcard(reviewingFlashcard.card_id, grade);
+                        await grantTime(1000 * 60); // 1 minute
                         navigateTo('review');
                     }}
                     flashcard={reviewingFlashcard}
@@ -78,12 +80,13 @@ const Overlay: React.FC = () => {
             {currentScreen === 'review' && reviewingFlashcard && (
                 <ReviewScreen
                     flashcard={reviewingFlashcard}
+                    areFlashcardsRemaining={flashcard !== null}
                     onEditButtonClick={() => {
                         setEditingFlashcard(reviewingFlashcard);
                         navigateTo('edit');
                     }}
                     onConfirmButtonClick={async () => {
-                        await 
+                        redeemExistingTimeGrant();
                         await closeOverlayAllTabs();
                     }}
                     onAnotherButtonClick={() => {

@@ -27,6 +27,17 @@ async function showFlashcardIfNeeded(): Promise<void> {
         return;
     }
 
+    /* Check if /next gives us null. If so, there are no more flashcards to review
+    and return early */
+    const flashcard = await getPersistentState<Flashcard | null>('flashcard');
+    if (!flashcard) {
+        await cacheNextFlashcard();
+        const newFlashcard = await getPersistentState<Flashcard | null>('flashcard');
+        if (!newFlashcard) {
+            return;
+        }
+    }
+
     // If the nextFlashcardTime has passed, show flashcard
     const nextFlashcardTime = await getPersistentState<number>('nextFlashcardTime');
     const currentTime = Date.now();
@@ -47,9 +58,9 @@ async function showFlashcard(): Promise<void> {
         });
     }
 
-    const flashcard = await getPersistentState<Flashcard>('flashcard');
+    const flashcard = await getPersistentState<Flashcard | null>('flashcard');
     if (!flashcard) {
-        cacheNextFlashcard();
+        await cacheNextFlashcard();
     }
     await createOverlayIfNotExists();
 }

@@ -28,10 +28,11 @@ export async function getUserData(): Promise<UserData> {
 /* This function fetches a flashcard from the /next path in the API
 and then overwrites the 'flashcard' persistent (global) state 
 The function should be used whenever a new flashcard should be fetched
-such as when reviewing, or when the current flashcard gets deleted */
+such as when reviewing, or when the current flashcard gets deleted
+NOTE: Not including a fetchNextFlashcard() since we should never need it. */
 export async function cacheNextFlashcard(): Promise<void> {
     const userData = await getUserData();
-    const currentFlashcard = await getPersistentState<Flashcard>('flashcard');
+    const currentFlashcard = await getPersistentState<Flashcard | null>('flashcard');
     let newFlashcard;
     let attempts = 0;
     const maxAttempts = 3;
@@ -51,7 +52,6 @@ export async function cacheNextFlashcard(): Promise<void> {
     if (newFlashcard.card_id === currentFlashcard?.card_id) {
         throw new Error(`Failed to fetch a new flashcard after ${maxAttempts} attempts`);
     }
-
     await setPersistentState('flashcard', newFlashcard);
 }
 
@@ -70,7 +70,7 @@ export async function editFlashcard(
         if (response.result !== 'success') 
             throw new Error(`Error editing flashcard: ${JSON.stringify(response)}`);
 
-        const flashcard = await getPersistentState<Flashcard>('flashcard');
+        const flashcard = await getPersistentState<Flashcard | null>('flashcard');
 
         if (flashcard?.card_id === card_id) {
             await setPersistentState('flashcard', response.flashcard);
@@ -85,12 +85,12 @@ export async function reviewFlashcard(
         const gradeMap = { Again: 1, Hard: 2, Good: 3, Easy: 4 };
         const numericalGrade = gradeMap[grade];
 
-        cacheNextFlashcard();
         const response = await browser.runtime.sendMessage({ 
             action: 'reviewFlashcard', 
             grade: numericalGrade,
             card_id
         });
+        await cacheNextFlashcard();
         
         return response.flashcard;
 }

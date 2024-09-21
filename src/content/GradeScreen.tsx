@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Flashcard } from '../common/types'; 
 import { renderMarkdown, GRADES } from '../common/common';
 
@@ -10,9 +10,20 @@ interface GradeScreenProps {
 }
 
 function GradeScreen({ onGradeButtonClick, flashcard, isFlipAnimationDone: isFlipAnimationDone, setIsFlipAnimationDone: setIsFlipAnimationDone }: GradeScreenProps) {
+    const [isLoading, setIsLoading] = useState(false);
+
     useEffect(() => {
         requestAnimationFrame(() => setIsFlipAnimationDone(true));
     }, [setIsFlipAnimationDone]);
+
+    const handleGradeClick = async (grade: typeof GRADES[number]) => {
+        setIsLoading(true);
+        try {
+            await onGradeButtonClick(grade);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <>
@@ -36,12 +47,13 @@ function GradeScreen({ onGradeButtonClick, flashcard, isFlipAnimationDone: isFli
                 <button
                     key={grade}
                     id={`blobsey-grade-button-${grade.toLowerCase()}`}
-                    onClick={() => onGradeButtonClick(grade)}
+                    onClick={() => handleGradeClick(grade)}
+                    disabled={isLoading}
                     className={`transform transition-[transform,opacity] duration-300 ${
                         isFlipAnimationDone 
                             ? 'translate-y-0 opacity-100' 
                             : 'translate-y-4 opacity-0'
-                    }`}
+                    } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     style={{ transitionDelay: `${index * 100}ms` }}
                 >
                     {grade}
