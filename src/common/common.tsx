@@ -4,13 +4,8 @@ import { marked } from 'marked';
 import { Flashcard, UserData } from "./types";
 import DOMPurify from 'dompurify';
 
-/* Works with a storage listener in content.tsx to send a message to all tabs
-without having to go through background script. A bit hacky :P */
 export async function closeOverlayAllTabs() {
-    await browser.storage.local.set({
-        'closeOverlaySignal': true
-    });
-    await browser.storage.local.remove('closeOverlaySignal');
+    await broadcastAllTabs('closeOverlayAllTabs');
 }
 
 /* All possible grades that can be given to a reviewed flashcard */
@@ -106,63 +101,6 @@ export async function takeScreenshotOfCallerTab(): Promise<string | null> {
     return null;
 }
 
-/* Silly hack which is required because when you focus into a window, it will focus the
-original document first, which will cause a scrolling jump if the overlay is scrollable */
-export function handleFocusIn() {
-    const activeElement = document
-        .getElementById('blobsey-host')
-        ?.shadowRoot
-        ?.activeElement as HTMLElement;
-
-    if (!activeElement) {
-        return;
-    }
-    
-    const focusableElements = getFocusableElements();
-    const focusedIndex = focusableElements.indexOf(activeElement);
-
-    // If current element is from overlay, find the next and focus it
-    if (focusedIndex === -1 && focusableElements.length > 0) {
-        focusableElements[0].focus();
-    }
-}
-
-/* This returns an array of HTMLElements which are focusable and children
-of the overlay. Used in handleFocusIn() and trapFocus() */
-function getFocusableElements() {
-    const shadowRoot = document.getElementById('blobsey-host')?.shadowRoot;
-    if (!shadowRoot)
-        return [];
-
-    return Array.from(shadowRoot.querySelectorAll(
-        'button:not([tabindex="-1"]), [href], input:not([tabindex="-1"]), select:not([tabindex="-1"]), textarea:not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])'
-    )).filter(el => {
-        const htmlEl = el as HTMLElement;
-        const isVisible = !!(htmlEl.offsetWidth || htmlEl.offsetHeight || htmlEl.getClientRects().length);
-        const isNotDisabled = !htmlEl.hasAttribute('disabled');
-        return isVisible && isNotDisabled;
-    }) as HTMLElement[];
-}
-
-/* This is used in a keydown event of 'tab', and it will keep the focus within the
-overlay. Not very accessibility-pilled, but oh well. TODO: a disable option for this */
-export function trapFocus(event: KeyboardEvent) {
-    if (event.key !== 'Tab') return;
-
-    event.preventDefault();
-    const focusableElements = getFocusableElements();
-    const shadowRoot = document.getElementById('blobsey-host')?.shadowRoot;
-
-    if (focusableElements.length > 0) {
-        const activeElement = shadowRoot?.activeElement as HTMLElement;
-        const currentIndex = focusableElements.indexOf(activeElement);
-        const nextIndex = (currentIndex + (event.shiftKey ? -1 : 1) + focusableElements.length) % focusableElements.length;
-        focusableElements[nextIndex].focus();
-    } else {
-        const host = document.getElementById('blobsey-host');
-        host?.focus();
-    }
-}
 
 export function renderMarkdown(text: string | null | undefined): React.ReactElement {
     if (!text) {
@@ -186,19 +124,22 @@ export async function grantTime(time: number) {
     await setPersistentState('existingTimeGrant', existingTimeGrant + time);
 }
 
-/* Utility function to 'redeem' time. Calculates the nextFlashcardTime by adding
-existingTimeGrant to the nextFlashcardTime, or Date.now() (whichever is later).
-This handles the case where the nextFlashcardTime can be passed by a long time, 
-such as when the user closes the browser for a while */
-export async function redeemExistingTimeGrant() {
-    const existingTimeGrant = await getPersistentState<number>('existingTimeGrant') ?? 0;
-    const currentTime = Date.now();
-    let baseTime = await getPersistentState<number>('nextFlashcardTime') ?? currentTime;
-    if (baseTime < currentTime) {
-        baseTime = currentTime;
+/* Utility function for sending a message to all tabs. Relies on the 
+'broadcast' message handler in background.ts and handleBroadcastReceived
+in content.tsx */
+export async function broadcastAllTabs(action: string) {
+    try {
+        const response = await browser.runtime.sendMessage({
+            action: 'broadcast',
+            broadcastedAction: action
+        });
+        if (response.result !== 'success') {
+            throw new Error(`Broadcast failed: ${response.message}`);
+        }
+    } catch (error) {
+        console.error('Error broadcasting message:', error);
+        throw error;
     }
-    setPersistentState('nextFlashcardTime', baseTime + existingTimeGrant);
-    setPersistentState('existingTimeGrant', 0);
 }
 
 /* Components */

@@ -5,12 +5,11 @@ import { getPersistentState, setPersistentState } from '../common/usePersistentS
 import {
   getUserData,
   takeScreenshotOfCallerTab,
-  cacheNextFlashcard,
-  trapFocus,
-  handleFocusIn,
+  cacheNextFlashcard
 } from '../common/common';
 import { Flashcard, BlockedSite } from '../common/types';
 import { ToastProvider } from './Toast';
+import { Message, MessageHandler } from '../common/types';
 
 // Global reference to a React root created through createRoot(), used for destroying the overlay.
 export let overlayRoot: Root | null = null;
@@ -104,6 +103,9 @@ async function createOverlayIfNotExists(): Promise<void> {
     document.addEventListener('keydown', trapFocus);
     document.addEventListener('focusin', handleFocusIn);
 
+    // Listens for broadcasts from background.ts
+    browser.runtime.onMessage.addListener(handleBroadcastReceived);
+
     overlayRoot = ReactDOM.createRoot(shadowRoot); // Create root
     overlayRoot.render(
         <ToastProvider>
@@ -112,7 +114,6 @@ async function createOverlayIfNotExists(): Promise<void> {
     );
 }
 
-// Export the destroyOverlayIfExists function
 export async function destroyOverlayIfExists(): Promise<void> {
     const host = document.getElementById('blobsey-host');
     if (host) {
@@ -138,7 +139,7 @@ export async function destroyOverlayIfExists(): Promise<void> {
         // Clean up listeners
         document.removeEventListener('keydown', trapFocus);
         document.removeEventListener('focusin', handleFocusIn);
-        browser.storage.onChanged.removeListener(handleOverlayCloseSignal);
+        browser.runtime.onMessage.removeListener(handleBroadcastReceived);
     }
 
     if (window.location.href.includes('blank.html')) {
@@ -146,24 +147,101 @@ export async function destroyOverlayIfExists(): Promise<void> {
     }
 }
 
+/* Silly hack which is required because when you focus into a window, it will focus the
+original document first, which will cause a scrolling jump if the overlay is scrollable */
+function handleFocusIn() {
+    const activeElement = document
+        .getElementById('blobsey-host')
+        ?.shadowRoot
+        ?.activeElement as HTMLElement;
+
+    if (!activeElement) {
+        return;
+    }
+    
+    const focusableElements = getFocusableElements();
+    const focusedIndex = focusableElements.indexOf(activeElement);
+
+    // If current element is from overlay, find the next and focus it
+    if (focusedIndex === -1 && focusableElements.length > 0) {
+        focusableElements[0].focus();
+    }
+}
+
+/* This returns an array of HTMLElements which are focusable and children
+of the overlay. Used in handleFocusIn() and trapFocus() */
+function getFocusableElements() {
+    const shadowRoot = document.getElementById('blobsey-host')?.shadowRoot;
+    if (!shadowRoot)
+        return [];
+
+    return Array.from(shadowRoot.querySelectorAll(
+        'button:not([tabindex="-1"]), [href], input:not([tabindex="-1"]), select:not([tabindex="-1"]), textarea:not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])'
+    )).filter(el => {
+        const htmlEl = el as HTMLElement;
+        const isVisible = !!(htmlEl.offsetWidth || htmlEl.offsetHeight || htmlEl.getClientRects().length);
+        const isNotDisabled = !htmlEl.hasAttribute('disabled');
+        return isVisible && isNotDisabled;
+    }) as HTMLElement[];
+}
+
+/* This is used in a keydown event of 'tab', and it will keep the focus within the
+overlay. Not very accessibility-pilled, but oh well. TODO: a disable option for this */
+function trapFocus(event: KeyboardEvent) {
+    if (event.key !== 'Tab') return;
+
+    event.preventDefault();
+    const focusableElements = getFocusableElements();
+    const shadowRoot = document.getElementById('blobsey-host')?.shadowRoot;
+
+    if (focusableElements.length > 0) {
+        const activeElement = shadowRoot?.activeElement as HTMLElement;
+        const currentIndex = focusableElements.indexOf(activeElement);
+        const nextIndex = (currentIndex + (event.shiftKey ? -1 : 1) + focusableElements.length) % focusableElements.length;
+        focusableElements[nextIndex].focus();
+    } else {
+        const host = document.getElementById('blobsey-host');
+        host?.focus();
+    }
+}
+
 async function init() {
     await destroyOverlayIfExists();
     await showFlashcardIfNeeded();
-
-    // Overlay is closed using browser messages only
-    browser.storage.onChanged.addListener(handleOverlayCloseSignal);
 }
 
-/* Handles 'messages' sent by closeOverlayAllTabs() in common.tsx
-'messages' are a storage key getting set/unset immediately */
-const handleOverlayCloseSignal = async (
-    changes: { [key: string]: browser.storage.StorageChange }, 
-    areaName: string) => {
-        if (areaName === 'local' && 
-            changes.closeOverlaySignal?.newValue === true) {
-                await destroyOverlayIfExists();
+const handleBroadcastReceived = (
+    message: Message, 
+    sender: browser.runtime.MessageSender, 
+    sendResponse: (response?: any) => void) => {
+        console.log('In content handleBroadcastReceived', message);
+        const handler = messageHandlers[message.action];
+        if (!handler) {
+            console.error(`Unknown action "${message.action}"`);
+            sendResponse({result: 'error', message: 'Unknown action'});
         }
-};
+
+        handler(message, sender, sendResponse)
+        .catch(error => {
+            console.error(`Error handling "${message.action}" message:`, error);
+            sendResponse({result: 'error', message: error.toString()});
+        });
+        
+        return true; // Indicates async response
+}
+
+const messageHandlers: Record<string, MessageHandler> = {
+    'closeOverlayAllTabs': async (message, sender, sendResponse) => {
+        await destroyOverlayIfExists();
+        sendResponse({ result: 'success' });
+    },
+    'showFlashcardAlarm': async (message, sender, sendResponse) => {
+        const nextFlashcardTime = await getPersistentState<number>('nextFlashcardTime') ?? 0;
+        const delay = Math.max(0, nextFlashcardTime - Date.now());
+        setTimeout(async () => await showFlashcardIfNeeded(), delay);
+        sendResponse({ result: 'success' })
+    }
+}
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

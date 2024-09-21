@@ -27,3 +27,13 @@ export interface Flashcard {
     review_date: string;
 }
 
+export interface Message {
+    action: string;
+    [key: string]: any;
+}
+
+export type MessageHandler = (
+    message: Message,
+    sender: browser.runtime.MessageSender,
+    sendResponse: (response?: any) => void
+) => Promise<void>;

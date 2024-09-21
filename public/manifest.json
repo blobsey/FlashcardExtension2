@@ -3,7 +3,10 @@
     "name": "FlashcardExtension2",
     "version": "0.0.1",
     "description": "Client for FlashcardAPIv2",
-    "permissions": ["storage"],
+    "permissions": [
+      "storage",
+      "alarms"
+    ],
     "background": {
       "service_worker": "background.js",
       "scripts": ["background.js"]

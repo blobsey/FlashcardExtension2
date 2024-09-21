@@ -8,14 +8,12 @@ import { reviewFlashcard,
         GRADES, 
         BackButton,
         grantTime,
-        closeOverlayAllTabs,
-        redeemExistingTimeGrant
+        closeOverlayAllTabs
 } from "../common/common";
 import '../styles/tailwind.css';
 import ReviewScreen from "./ReviewScreen";
 import EditScreen from "./EditScreen";
-import { ToastProvider, useToast } from "./Toast";
-import { destroyOverlayIfExists } from './content';
+import { useToast } from "./Toast";
 
 type Screen = 'flashcard' | 'grade' | 'review' | 'edit';
 
@@ -86,7 +84,7 @@ const Overlay: React.FC = () => {
                         navigateTo('edit');
                     }}
                     onConfirmButtonClick={async () => {
-                        redeemExistingTimeGrant();
+                        browser.runtime.sendMessage({ action: 'redeemExistingTimeGrant'});
                         await closeOverlayAllTabs();
                     }}
                     onAnotherButtonClick={() => {

@@ -1,16 +1,28 @@
 import { getPersistentState, setPersistentState } from "../common/usePersistentState";
+import { Message, MessageHandler } from "../common/types";
 
-interface Message {
-    action: string;
-    [key: string]: any;
+browser.alarms.onAlarm.addListener((alarm) => {
+    console.log('Got alarm:', alarm);
+    if (alarm.name === "showFlashcardAlarm") {
+        broadcastAllTabsFromBackground('showFlashcardAlarm');
+    }
+});
+
+async function broadcastAllTabsFromBackground(action: string) {
+    const tabs = await browser.tabs.query({});
+    const broadcastPromises = tabs.map(tab => {
+        if (tab.id !== undefined) {
+            return browser.tabs.sendMessage(tab.id, {
+                action
+            }).catch(error => {
+                console.info(`Failed to send message to 'tab '${tab.title}'`, error);
+            });
+        }
+    });
+    
+    await Promise.all(broadcastPromises);
+    return;
 }
-
-type MessageHandler = (
-    message: Message,
-    sender: browser.runtime.MessageSender,
-    sendResponse: (response?: any) => void
-) => Promise<void>;
-
 
 // Listener which relates message.action to corresponding function in messageHandlers
 browser.runtime.onMessage.addListener((
@@ -33,6 +45,32 @@ browser.runtime.onMessage.addListener((
 });
 
 const messageHandlers: Record<string, MessageHandler> = {
+    'redeemExistingTimeGrant': async (message, sender, sendResponse) => {
+        const existingTimeGrant = await getPersistentState<number>('existingTimeGrant') ?? 0;
+        const currentTime = Date.now();
+        let baseTime = await getPersistentState<number>('nextFlashcardTime') ?? currentTime;
+        if (baseTime < currentTime) {
+            baseTime = currentTime;
+        }
+        const nextFlashcardTime = baseTime + existingTimeGrant;
+        setPersistentState('nextFlashcardTime', nextFlashcardTime);
+        setPersistentState('existingTimeGrant', 0);
+    
+        browser.alarms.create("showFlashcardAlarm", {
+            delayInMinutes: existingTimeGrant / 60000,
+        });
+        const alarmInfo = await browser.alarms.get("showFlashcardAlarm");
+        console.log('baseTime:', new Date(baseTime).toLocaleString());
+        console.log('nextFlashcardTime:', new Date(nextFlashcardTime).toLocaleString());
+        if (alarmInfo && alarmInfo.scheduledTime) {
+            console.log('Alarm scheduledTime:', new Date(alarmInfo.scheduledTime).toLocaleString());
+        }
+        sendResponse({ result: 'success' });
+    },
+    'broadcast': async (message, sender, sendResponse) => {
+        await broadcastAllTabsFromBackground(message.broadcastedAction);
+        sendResponse({ result: 'success' });
+    },
     'screenshotCurrentTab': async (message, sender, sendResponse) => {
         if (!sender.tab || !sender.tab.active) {
             throw new Error("Caller tab must be the active tab to capture screenshot");
