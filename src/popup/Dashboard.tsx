@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as Checkbox from '@radix-ui/react-checkbox';
-import { CheckIcon, Pencil1Icon, TrashIcon, CheckCircledIcon, CrossCircledIcon } from '@radix-ui/react-icons';
+import { CheckIcon, Pencil1Icon, TrashIcon, 
+    CheckCircledIcon, CrossCircledIcon, PlusIcon
+} from '@radix-ui/react-icons';
 import usePersistentState from '../common/usePersistentState';
 import { useDebounce } from '../common/useDebounce';
 import { getUserData, updateUserData } from '../common/common';
@@ -12,6 +14,7 @@ const Dashboard: React.FC = () => {
     const [localUserData, setLocalUserData] = useState<Partial<UserData> | null>(null);
     const [editingSiteIndex, setEditingSiteIndex] = useState<number | null>(null);
     const [editingSiteText, setEditingSiteText] = useState<string>('');
+    const editInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -85,7 +88,6 @@ const Dashboard: React.FC = () => {
             const updatedSites = prevData.blocked_sites.filter((_, i) => i !== index);
             const updatedData = { ...prevData, blocked_sites: updatedSites };
             
-            // Call updateUserData with the new data
             updateUserData(updatedData);
             
             return updatedData;
@@ -105,6 +107,9 @@ const Dashboard: React.FC = () => {
             }
             return prevData;
         });
+        if (localUserData?.blocked_sites?.length) {
+            setEditingSiteIndex(localUserData?.blocked_sites?.length)
+        }
     }
 
     const handleSaveEdit = () => {
@@ -130,10 +135,20 @@ const Dashboard: React.FC = () => {
 
     const handleCancelEdit = () => {
         setEditingSiteIndex(null);
+        if (editInputRef.current?.value === '' && localUserData?.blocked_sites?.length) {
+            handleDeleteSite(localUserData?.blocked_sites?.length - 1);
+        }
     };
 
+    // Auto focus input when editing a site
+    useEffect(() => {
+        if (editingSiteIndex !== null) {
+            editInputRef.current?.focus();
+        }
+    }, [editingSiteIndex]);
+
     return (
-        <div className="p-4 w-full">
+        <div className="p-4 w-full flex flex-col items-center">
             <div>Logged in to:</div>
             <code>{apiBaseUrl}</code>
             
@@ -149,7 +164,7 @@ const Dashboard: React.FC = () => {
                 />
             </div>
             
-            <div className="mt-4">
+            <div className="mt-4 w-full">
                 <h4 className="font-semibold mb-2">Blocked Sites</h4>
                 <ul>
                     {localUserData?.blocked_sites && localUserData?.blocked_sites.map((site, index) => (
@@ -167,6 +182,7 @@ const Dashboard: React.FC = () => {
                                 {editingSiteIndex === index ? 
                                     <>
                                         <input
+                                            ref={editInputRef}
                                             type="text"
                                             value={editingSiteText}
                                             onChange={(e) => setEditingSiteText(e.target.value)}
@@ -205,10 +221,16 @@ const Dashboard: React.FC = () => {
                             </div>
                         </li>
                     ))}
+                    <button
+                        onClick={handleAddSite}
+                        className="w-full p-2 flex items-center justify-center bg-transparent hover:bg-white/10"
+                    >
+                        <PlusIcon />
+                    </button>
                 </ul>
             </div>
             
-            <div className="mt-4">
+            <div className="mt-2 flex-row items-start w-full">
                 <button
                     onClick={() => browser.runtime.sendMessage({ action: 'logout' })}
                     className="px-4 py-1 bg-red-500/25 text-white rounded hover:bg-red-500/50"
