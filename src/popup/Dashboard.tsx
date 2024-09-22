@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import usePersistentState from '../common/usePersistentState';
+import '../styles/popup-tailwind.css';
 
 const Dashboard: React.FC = () => {
 

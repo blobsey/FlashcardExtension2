@@ -8,10 +8,9 @@ const __dirname = path.dirname(__filename);
 
 export default {
   entry: {
-    popup: './src/popup/index.tsx',
+    popup: ['./src/popup/index.tsx', './src/styles/popup-tailwind.css'],
     background: './src/background/background.ts',
-    content: './src/content/content.tsx',
-    tailwind: './src/styles/tailwind.css', // Add this line
+    content: ['./src/content/content.tsx', './src/styles/content-tailwind.css'],
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -50,7 +49,7 @@ export default {
       ],
     }),
     new MiniCssExtractPlugin({
-      filename: 'styles/[name].css',
+      filename: 'styles/[name]-tailwind.css',
     }),
   ],
   devtool: 'inline-source-map',

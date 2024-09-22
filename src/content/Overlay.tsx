@@ -9,7 +9,7 @@ import { reviewFlashcard,
         BackButton,
         grantTime,
 } from "../common/common";
-import '../styles/tailwind.css';
+import '../styles/content-tailwind.css';
 import ReviewScreen from "./ReviewScreen";
 import EditScreen from "./EditScreen";
 import { useToast } from "./Toast";

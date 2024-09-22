@@ -7,9 +7,9 @@ const Popup: React.FC = () => {
     const [isLoggedIn, _] = usePersistentState('isLoggedIn', false);
 
     return (
-        <div id='root'>
+        <>
             {isLoggedIn ? <Dashboard /> : <LoginPage />}
-        </div>
+        </>
     );
 };
 
