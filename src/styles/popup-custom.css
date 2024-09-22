@@ -1,6 +1,7 @@
 body {
     background-color: rgb(17, 17, 17);
     overflow: hidden;
+    min-width: 400px;
 }
 
 #root {
@@ -14,42 +15,16 @@ body {
 }
 
 /* Mostly aesthetic styles past this point */
-button {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center; 
-    width: 6em;
-    padding: .25em; 
-    cursor: pointer;
-    color: rgb(255, 255, 255);
-    border-radius: 3px;
-    background:rgba(255, 255, 255, 0.1);
-    border: transparent;
-    outline: none;
-    height: 2rem;
-    line-height: 1.25rem;
-}
-
-button:hover {
-    background: rgba(255, 255, 255, 0.2); 
-}
 
 button:focus,
 input:focus {
     color: rgba(255, 255, 255, 1);
     outline: 1px solid rgba(255, 255, 255, .75);
-    outline-offset: -1px;
-}
-
-button:disabled {
-    color: rgba(255, 255, 255, 0.5);
-    border-color: rgba(255, 255, 255, 0.5);
-    cursor: default;
-    background-color: rgba(255, 255, 255, 0.1);
 }
 
 input {
+    border: none;
+    outline: 1px solid rgba(255, 255, 255, .25);
     background: transparent;
 }
 
@@ -63,5 +38,4 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
     -moz-appearance: textfield;
     appearance: textfield;
-    border: solid rgba(255, 255, 255, 0.5);
 }
