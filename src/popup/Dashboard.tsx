@@ -7,7 +7,7 @@ import '../styles/popup-tailwind.css';
 
 const Dashboard: React.FC = () => {
     const [apiBaseUrl, _] = usePersistentState('apiBaseUrl', '');
-    const [localUserData, setLocalUserData] = useState<UserData | null>(null);
+    const [localUserData, setLocalUserData] = useState<Partial<UserData> | null>(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -27,6 +27,30 @@ const Dashboard: React.FC = () => {
         }
     }, 500);
 
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const inputStr = e.target.value;
+        setLocalUserData(prevData => {
+            if (!prevData) return prevData;
+
+            const updatedData = { ...prevData };
+            
+            if (inputStr === '') {
+                delete updatedData.max_new_cards;
+            } else {
+                const newValue = parseInt(inputStr, 10);
+                if (!isNaN(newValue)) {
+                    updatedData.max_new_cards = newValue;
+                }
+            }
+
+            return updatedData;
+        });
+
+        if (inputStr !== '') {
+            debouncedSaveFunc();
+        }
+    };
+
     return (
         <div className="p-4">
             <div>Logged in to: <code>{apiBaseUrl}</code></div>
@@ -37,20 +61,7 @@ const Dashboard: React.FC = () => {
                     id="maxNewCards"
                     type="number"
                     value={localUserData?.max_new_cards ?? ''}
-                    onChange={(e) => {
-                        const inputStr = e.target.value;
-                        const newValue = inputStr === '' ? 0 : parseInt(inputStr, 10);
-                        setLocalUserData(prevData => {
-                            if (prevData) {
-                                return {
-                                    ...prevData,
-                                    max_new_cards: newValue
-                                };
-                            }
-                            return prevData;
-                        });
-                        debouncedSaveFunc();
-                    }}
+                    onChange={handleInputChange}
                     className="w-full p-2 border rounded"
                     min="0"
                 />

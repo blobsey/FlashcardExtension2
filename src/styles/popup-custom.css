@@ -35,7 +35,8 @@ button:hover {
     background: rgba(255, 255, 255, 0.2); 
 }
 
-button:focus {
+button:focus,
+input:focus {
     color: rgba(255, 255, 255, 1);
     outline: 1px solid rgba(255, 255, 255, .75);
     outline-offset: -1px;
@@ -50,4 +51,17 @@ button:disabled {
 
 input {
     background: transparent;
+}
+
+/* Remove spinner buttons from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+    border: solid rgba(255, 255, 255, 0.5);
 }
