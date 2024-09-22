@@ -94,9 +94,7 @@ const messageHandlers: Record<string, MessageHandler> = {
             if (tabId === tab.id && 
                 changeInfo.status === 'complete' && 
                 updatedTab.url?.startsWith(`${apiBaseUrl}/auth`)) {
-                    setTimeout(() => {
-                        browser.tabs.remove(tabId);
-                    }, 3000);
+                    browser.tabs.remove(tabId);
 
                     handleApiRequest("/validate-authentication")
                     .then((data) => {
@@ -161,6 +159,16 @@ const messageHandlers: Record<string, MessageHandler> = {
             })
         });
         sendResponse({result: 'success', ...data})
+    },
+    'updateUserData': async (message, sender, sendResponse) => {
+        const data = await handleApiRequest("/user-data", {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(message.data)
+        });
+        sendResponse({result: 'success', ...data});
     }
 }
 

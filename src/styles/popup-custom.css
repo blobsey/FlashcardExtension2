@@ -1,8 +1,53 @@
+body {
+    background-color: rgb(17, 17, 17);
+    overflow: hidden;
+}
+
 #root {
     display: flex;
     align-items: safe center;
     flex-direction: column;
-    background-color: rgb(26, 26, 26);
+    background-color: rgb(17, 17, 17);
     color: white;
+    font-size: .9rem;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Mostly aesthetic styles past this point */
+button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center; 
+    width: 6em;
+    padding: .25em; 
+    cursor: pointer;
+    color: rgb(255, 255, 255);
+    border-radius: 3px;
+    background:rgba(255, 255, 255, 0.1);
+    border: transparent;
+    outline: none;
+    height: 2rem;
+    line-height: 1.25rem;
+}
+
+button:hover {
+    background: rgba(255, 255, 255, 0.2); 
+}
+
+button:focus {
+    color: rgba(255, 255, 255, 1);
+    outline: 1px solid rgba(255, 255, 255, .75);
+    outline-offset: -1px;
+}
+
+button:disabled {
+    color: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.5);
+    cursor: default;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+input {
+    background: transparent;
 }

@@ -16,6 +16,17 @@ export async function getUserData(): Promise<UserData> {
     return data;
 }
 
+/* Utility function to update userData. Only specify which fields need updating */
+export async function updateUserData(userData: Partial<UserData>): Promise<void> {
+    const { result, data } = await browser.runtime.sendMessage({ 
+        action: "updateUserData",
+        data: userData 
+    });
+    if (result !== "success") {
+        throw new Error(JSON.stringify(data));
+    }
+}
+
 /* This function fetches a flashcard from the /next path in the API
 and then overwrites the 'flashcard' persistent (global) state 
 The function should be used whenever a new flashcard should be fetched
