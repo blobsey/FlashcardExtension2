@@ -20,7 +20,7 @@ async function showFlashcardIfNeeded(): Promise<void> {
     // Check if site is in userData blocked_sites list
     const currentUrl = window.location.href;
     const isBlockedSite = userData.blocked_sites.some((site: BlockedSite) => {
-        return site.active && currentUrl.includes(site.url);
+        return site.url !== '' && site.active && currentUrl.startsWith(site.url);
     });
     if (!isBlockedSite) {
         return;

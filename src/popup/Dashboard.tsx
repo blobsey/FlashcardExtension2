@@ -10,16 +10,14 @@ import '../styles/popup-tailwind.css';
 const Dashboard: React.FC = () => {
     const [apiBaseUrl, _] = usePersistentState('apiBaseUrl', '');
     const [localUserData, setLocalUserData] = useState<Partial<UserData> | null>(null);
-    const [blockedSites, setBlockedSites] = useState<BlockedSite[]>([]);
     const [editingSiteIndex, setEditingSiteIndex] = useState<number | null>(null);
-    const [editingUrl, setEditingUrl] = useState<string>('');
+    const [editingSiteText, setEditingSiteText] = useState<string>('');
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
                 const userData = await getUserData();
                 setLocalUserData(userData);
-                setBlockedSites(userData.blocked_sites || []);
             } catch (error) {
                 console.error('Error fetching user data:', error);
             }
@@ -58,36 +56,80 @@ const Dashboard: React.FC = () => {
     };
 
     const handleSiteActiveChange = (index: number) => {
-        const updatedSites = [...blockedSites];
-        updatedSites[index].active = !updatedSites[index].active;
-        setBlockedSites(updatedSites);
-        updateUserData({ blocked_sites: updatedSites });
+        setLocalUserData(prevData => {
+            if (!prevData || !prevData.blocked_sites) return prevData;
+            
+            const updatedBlockedSites = [...prevData.blocked_sites];
+            updatedBlockedSites[index] = {
+                ...updatedBlockedSites[index],
+                active: !updatedBlockedSites[index].active
+            };
+            
+            const updatedData = { ...prevData, blocked_sites: updatedBlockedSites };
+            updateUserData(updatedData);
+            return updatedData;
+        });
     };
 
     const handleEditSite = (index: number) => {
+        if (localUserData?.blocked_sites) {
+            setEditingSiteText(localUserData.blocked_sites[index].url);
+        }
         setEditingSiteIndex(index);
-        setEditingUrl(blockedSites[index].url);
     };
 
     const handleDeleteSite = (index: number) => {
-        const updatedSites = blockedSites.filter((_, i) => i !== index);
-        setBlockedSites(updatedSites);
-        updateUserData({ blocked_sites: updatedSites });
+        setLocalUserData(prevData => {
+            if (!prevData || !prevData.blocked_sites) return prevData;
+            
+            const updatedSites = prevData.blocked_sites.filter((_, i) => i !== index);
+            const updatedData = { ...prevData, blocked_sites: updatedSites };
+            
+            // Call updateUserData with the new data
+            updateUserData(updatedData);
+            
+            return updatedData;
+        });
     };
 
+    const handleAddSite = () => {
+        setLocalUserData(prevData => {
+            if (prevData?.blocked_sites) {
+                const existingBlockedSites = prevData?.blocked_sites ?? [];
+                const newUserData = { 
+                    ...prevData, 
+                    blocked_sites: [ ...existingBlockedSites, { url: '', active: true }]
+                };
+                updateUserData(newUserData);
+                return newUserData;
+            }
+            return prevData;
+        });
+    }
+
     const handleSaveEdit = () => {
-        if (editingSiteIndex !== null) {
-            const updatedSites = [...blockedSites];
-            updatedSites[editingSiteIndex].url = editingUrl;
-            setBlockedSites(updatedSites);
-            updateUserData({ blocked_sites: updatedSites });
-            setEditingSiteIndex(null);
-        }
+        setLocalUserData(prevData => {
+            if (!prevData || !prevData.blocked_sites || editingSiteIndex === null) return prevData;
+            
+            const updatedBlockedSites = [...prevData.blocked_sites];
+            updatedBlockedSites[editingSiteIndex] = {
+                ...updatedBlockedSites[editingSiteIndex],
+                url: editingSiteText
+            };
+            
+            const updatedData = { ...prevData, blocked_sites: updatedBlockedSites };
+            
+            // Call updateUserData with the new data
+            updateUserData(updatedData);
+            
+            return updatedData;
+        });
+        
+        setEditingSiteIndex(null);
     };
 
     const handleCancelEdit = () => {
         setEditingSiteIndex(null);
-        setEditingUrl('');
     };
 
     return (
@@ -110,7 +152,7 @@ const Dashboard: React.FC = () => {
             <div className="mt-4">
                 <h4 className="font-semibold mb-2">Blocked Sites</h4>
                 <ul>
-                    {blockedSites.map((site, index) => (
+                    {localUserData?.blocked_sites && localUserData?.blocked_sites.map((site, index) => (
                         <li key={index} className="flex items-center mb-2">
                             <Checkbox.Root
                                 className="flex h-5 w-5 items-center justify-center rounded border border-gray-300 bg-transparent hover:bg-gray-100/25 focus:outline-white transition-colors duration-200"
@@ -126,8 +168,8 @@ const Dashboard: React.FC = () => {
                                     <>
                                         <input
                                             type="text"
-                                            value={editingUrl}
-                                            onChange={(e) => setEditingUrl(e.target.value)}
+                                            value={editingSiteText}
+                                            onChange={(e) => setEditingSiteText(e.target.value)}
                                             className="flex-grow pl-2 p-1 border-none text-sm rounded"
                                         />
                                         <button
