@@ -10,6 +10,7 @@ const Dashboard: React.FC = () => {
         <div>Logged in to</div>
         <div><code>{apiBaseUrl}</code></div>
         <div>
+        
         <button
             onClick={() => browser.runtime.sendMessage({ action: 'logout' })}>
                 Logout

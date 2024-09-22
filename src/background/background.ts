@@ -4,11 +4,11 @@ import { Message, MessageHandler } from "../common/types";
 browser.alarms.onAlarm.addListener((alarm) => {
     console.log('Got alarm:', alarm);
     if (alarm.name === "showFlashcardAlarm") {
-        broadcastAllTabsFromBackground('showFlashcardAlarm');
+        sendMessageAllTabs('showFlashcardAlarm');
     }
 });
 
-async function broadcastAllTabsFromBackground(action: string) {
+async function sendMessageAllTabs(action: string) {
     const tabs = await browser.tabs.query({});
     const broadcastPromises = tabs.map(tab => {
         if (tab.id !== undefined) {
@@ -21,10 +21,9 @@ async function broadcastAllTabsFromBackground(action: string) {
     });
     
     await Promise.all(broadcastPromises);
-    return;
 }
 
-// Listener which relates message.action to corresponding function in messageHandlers
+// Boilerplate which relates message.action to corresponding function in messageHandlers
 browser.runtime.onMessage.addListener((
     message: Message, 
     sender: browser.runtime.MessageSender, 
@@ -68,7 +67,7 @@ const messageHandlers: Record<string, MessageHandler> = {
         sendResponse({ result: 'success' });
     },
     'broadcast': async (message, sender, sendResponse) => {
-        await broadcastAllTabsFromBackground(message.broadcastedAction);
+        await sendMessageAllTabs(message.broadcastedAction);
         sendResponse({ result: 'success' });
     },
     'screenshotCurrentTab': async (message, sender, sendResponse) => {

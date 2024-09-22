@@ -150,6 +150,27 @@ tiles it to get rid of 'halo-effect' with cheap blur */
     fill: currentColor;
 }
 
+#blobsey-overlay ul,
+#blobsey-overlay ol {
+    display: block;
+    list-style-position: inside;
+    text-align: left;
+}
+
+#blobsey-overlay ul {
+    list-style-type: disc;
+}
+
+#blobsey-overlay ol {
+    list-style-type: decimal;
+}
+
+#blobsey-overlay li {
+    display: list-item;
+    padding-left: 1em;
+    text-indent: -1em;
+}
+
 .has-underline::after {
     content: '';
     position: absolute;

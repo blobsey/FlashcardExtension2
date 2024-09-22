@@ -4,10 +4,6 @@ import { marked } from 'marked';
 import { Flashcard, UserData } from "./types";
 import DOMPurify from 'dompurify';
 
-export async function closeOverlayAllTabs() {
-    await broadcastAllTabs('closeOverlayAllTabs');
-}
-
 /* All possible grades that can be given to a reviewed flashcard */
 export const GRADES = Object.freeze(['Again', 'Hard', 'Good', 'Easy'] as const);
 
@@ -122,24 +118,6 @@ Confirm button 'redeems' the time and starts counting down. */
 export async function grantTime(time: number) {
     const existingTimeGrant = await getPersistentState<number>('existingTimeGrant') ?? 0;
     await setPersistentState('existingTimeGrant', existingTimeGrant + time);
-}
-
-/* Utility function for sending a message to all tabs. Relies on the 
-'broadcast' message handler in background.ts and handleBroadcastReceived
-in content.tsx */
-export async function broadcastAllTabs(action: string) {
-    try {
-        const response = await browser.runtime.sendMessage({
-            action: 'broadcast',
-            broadcastedAction: action
-        });
-        if (response.result !== 'success') {
-            throw new Error(`Broadcast failed: ${response.message}`);
-        }
-    } catch (error) {
-        console.error('Error broadcasting message:', error);
-        throw error;
-    }
 }
 
 /* Components */

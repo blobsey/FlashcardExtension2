@@ -8,12 +8,12 @@ import { reviewFlashcard,
         GRADES, 
         BackButton,
         grantTime,
-        closeOverlayAllTabs
 } from "../common/common";
 import '../styles/tailwind.css';
 import ReviewScreen from "./ReviewScreen";
 import EditScreen from "./EditScreen";
 import { useToast } from "./Toast";
+import { broadcastThroughBackgroundScript } from "./commonContent";
 
 type Screen = 'flashcard' | 'grade' | 'review' | 'edit';
 
@@ -53,7 +53,7 @@ const Overlay: React.FC = () => {
     };
 
     return (
-        <div id='blobsey-overlay'>
+        <div id='blobsey-overlay' data-current-screen={currentScreen}>
             {currentScreen === 'flashcard' && (
                 <FlashcardScreen
                     flashcard={flashcard}
@@ -84,8 +84,15 @@ const Overlay: React.FC = () => {
                         navigateTo('edit');
                     }}
                     onConfirmButtonClick={async () => {
-                        browser.runtime.sendMessage({ action: 'redeemExistingTimeGrant'});
-                        await closeOverlayAllTabs();
+                        /* Redeem time, and close any flashcard-showing 
+                        overlays on all tabs */
+                        const response = await browser.runtime.sendMessage({ 
+                            action: 'redeemExistingTimeGrant'
+                        });
+                        if (response.result !== 'success') {
+                            throw new Error(response);
+                        }
+                        await broadcastThroughBackgroundScript('closeOverlayIfFlashcardScreen');
                     }}
                     onAnotherButtonClick={() => {
                         setIsFlipAnimationDone(false);

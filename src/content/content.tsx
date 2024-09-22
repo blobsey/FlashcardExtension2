@@ -139,7 +139,6 @@ export async function destroyOverlayIfExists(): Promise<void> {
         // Clean up listeners
         document.removeEventListener('keydown', trapFocus);
         document.removeEventListener('focusin', handleFocusIn);
-        browser.runtime.onMessage.removeListener(handleBroadcastReceived);
     }
 
     if (window.location.href.includes('blank.html')) {
@@ -205,22 +204,17 @@ function trapFocus(event: KeyboardEvent) {
     }
 }
 
-async function init() {
-    await destroyOverlayIfExists();
-    await showFlashcardIfNeeded();
-}
-
 const handleBroadcastReceived = (
     message: Message, 
     sender: browser.runtime.MessageSender, 
     sendResponse: (response?: any) => void) => {
-        console.log('In content handleBroadcastReceived', message);
         const handler = messageHandlers[message.action];
         if (!handler) {
             console.error(`Unknown action "${message.action}"`);
             sendResponse({result: 'error', message: 'Unknown action'});
         }
 
+        console.log('Calling handler for:', message);
         handler(message, sender, sendResponse)
         .catch(error => {
             console.error(`Error handling "${message.action}" message:`, error);
@@ -235,12 +229,28 @@ const messageHandlers: Record<string, MessageHandler> = {
         await destroyOverlayIfExists();
         sendResponse({ result: 'success' });
     },
+    'closeOverlayIfFlashcardScreen': async (message, sender, sendResponse) => {
+        const currentScreen = document
+            .getElementById('blobsey-host')
+            ?.shadowRoot
+            ?.getElementById('blobsey-overlay')
+            ?.dataset.currentScreen;
+        if (currentScreen && ['flashcard', 'grade', 'review'].includes(currentScreen)) {
+            await destroyOverlayIfExists();
+        }
+        sendResponse({ result: 'success' });
+    },
     'showFlashcardAlarm': async (message, sender, sendResponse) => {
         const nextFlashcardTime = await getPersistentState<number>('nextFlashcardTime') ?? 0;
         const delay = Math.max(0, nextFlashcardTime - Date.now());
         setTimeout(async () => await showFlashcardIfNeeded(), delay);
         sendResponse({ result: 'success' })
     }
+}
+
+async function init() {
+    await destroyOverlayIfExists();
+    await showFlashcardIfNeeded();
 }
 
 if (document.readyState === 'loading') {
