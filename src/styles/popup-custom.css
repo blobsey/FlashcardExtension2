@@ -1,16 +1,16 @@
 body {
     overflow: hidden;
-    min-width: 400px;
+    min-width: 350px;
     background-color: rgb(32, 32, 32);
+    color: white;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 #root {
     display: flex;
     align-items: safe center;
     flex-direction: column;
-    color: white;
     font-size: .9rem;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 /* Mostly aesthetic styles past this point */
@@ -23,7 +23,8 @@ input:focus {
 
 input {
     border: none;
-    outline: 1px solid rgba(255, 255, 255, .25);
+    border-bottom: 1px solid rgba(255, 255, 255, .25);
+    margin-bottom: -1px;
     background: transparent;
 }
 

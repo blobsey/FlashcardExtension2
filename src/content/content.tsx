@@ -5,14 +5,21 @@ import { getPersistentState, setPersistentState } from '../common/usePersistentS
 import {
   getUserData,
   takeScreenshotOfCallerTab,
-  cacheNextFlashcard
+  cacheNextFlashcard,
+  getCurrentScreen
 } from '../common/common';
-import { Flashcard, BlockedSite } from '../common/types';
-import { ToastProvider } from './Toast';
+import { Flashcard, BlockedSite, Screen } from '../common/types';
+import { ToastProvider, useToast } from './Toast';
 import { Message, MessageHandler } from '../common/types';
 
 // Global reference to a React root created through createRoot(), used for destroying the overlay.
 export let overlayRoot: Root | null = null;
+
+// Creating the overlay sets this to a function which shows toasts
+let toast: null | ReturnType<typeof useToast>;
+
+// A ref to from Overlay.tsx which allows accessing setCurrentScreen from content.tsx
+let setCurrentScreenRef: React.MutableRefObject<((screen: Screen) => void) | null> = { current: null };
 
 async function showFlashcardIfNeeded(): Promise<void> {
     const userData = await getUserData();
@@ -46,25 +53,55 @@ async function showFlashcardIfNeeded(): Promise<void> {
 }
 
 async function showFlashcard(): Promise<void> {
+    /* showFlashcard() can be called manually by user, but we *probably* don't want to reset the
+    current flashcard review loop, so return early in this edge case */
+    const currentScreen = getCurrentScreen();
+    if (currentScreen && ['flashcard', 'grade', 'review'].includes(currentScreen)) {
+        if (toast) {
+            toast({ content: 'Already showing a flashcard!' });
+        }
+        return;
+    }
+
+    console.log('Showing a flashard');
+
     // Calculate existing initial time grant, will be added to by grantTime()
     const existingTimeGrant = await getPersistentState<number>('existingTimeGrant');
-    if (!existingTimeGrant) { // In case showFlashcard() gets called before "redeeming" time
+
+    /* If showFlashcard() gets called after time is redeemed (or for the first time ever)
+    then there won't be an existingTimeGrant, so we need to calculate by subtracting the
+    currentTime from the nextFlashcardTime. */
+    if (!existingTimeGrant) { 
         const currentTime = Date.now();
         const nextFlashcardTime = await getPersistentState<number>('nextFlashcardTime');
         const calculatedTimeGrant = nextFlashcardTime ? Math.max(nextFlashcardTime - currentTime, 0) : 0;
-        await browser.storage.local.set({
-            existingTimeGrant: calculatedTimeGrant
-        });
+        await setPersistentState('existingTimeGrant', calculatedTimeGrant);
+        await setPersistentState('nextFlashcardTime', currentTime);
     }
 
     const flashcard = await getPersistentState<Flashcard | null>('flashcard');
     if (!flashcard) {
         await cacheNextFlashcard();
     }
-    await createOverlayIfNotExists();
+
+    if (setCurrentScreenRef.current) {
+        setCurrentScreenRef.current('flashcard');
+    }
+    else {
+        createOverlayIfNotExists('flashcard');
+    }
 }
 
-async function createOverlayIfNotExists(): Promise<void> {
+async function showListScreen(): Promise<void> {
+    if (setCurrentScreenRef.current) {
+        setCurrentScreenRef.current('list');
+    }
+    else {
+        createOverlayIfNotExists('list');
+    }
+}
+
+async function createOverlayIfNotExists(initialScreen: Screen): Promise<void> {
     let host = document.getElementById('blobsey-host');
     if (!host) {
         host = document.createElement('div');
@@ -103,15 +140,22 @@ async function createOverlayIfNotExists(): Promise<void> {
     document.addEventListener('keydown', trapFocus);
     document.addEventListener('focusin', handleFocusIn);
 
-    // Listens for broadcasts from background.ts
-    browser.runtime.onMessage.addListener(handleBroadcastReceived);
-
     overlayRoot = ReactDOM.createRoot(shadowRoot); // Create root
     overlayRoot.render(
         <ToastProvider>
-            <Overlay />
+            <ToastSetter />
+            <Overlay 
+                initialScreen={initialScreen}
+                setCurrentScreenRef={setCurrentScreenRef}
+            />
         </ToastProvider>
     );
+}
+
+// Component which allows using toasts from content.tsx
+function ToastSetter() {
+    toast = useToast();
+    return null;
 }
 
 export async function destroyOverlayIfExists(): Promise<void> {
@@ -143,6 +187,10 @@ export async function destroyOverlayIfExists(): Promise<void> {
 
     if (window.location.href.includes('blank.html')) {
         window.history.back();
+    }
+
+    if (toast) {
+        toast = null;
     }
 }
 
@@ -230,27 +278,33 @@ const messageHandlers: Record<string, MessageHandler> = {
         sendResponse({ result: 'success' });
     },
     'closeOverlayIfFlashcardScreen': async (message, sender, sendResponse) => {
-        const currentScreen = document
-            .getElementById('blobsey-host')
-            ?.shadowRoot
-            ?.getElementById('blobsey-overlay')
-            ?.dataset.currentScreen;
+        const currentScreen = getCurrentScreen();
         if (currentScreen && ['flashcard', 'grade', 'review'].includes(currentScreen)) {
             await destroyOverlayIfExists();
         }
         sendResponse({ result: 'success' });
     },
     'showFlashcardAlarm': async (message, sender, sendResponse) => {
-        const nextFlashcardTime = await getPersistentState<number>('nextFlashcardTime') ?? 0;
+        const nextFlashcardTime = await getPersistentState<number>('nextFlashcardTime') ?? Date.now();
         const delay = Math.max(0, nextFlashcardTime - Date.now());
         setTimeout(async () => await showFlashcardIfNeeded(), delay);
-        sendResponse({ result: 'success' })
+        sendResponse({ result: 'success' });
+    },
+    'showFlashcard': async (message, sender, sendResponse) => {
+        await showFlashcard();
+        sendResponse({ result: 'success' });
+    },
+    'showListScreen': async (message, sender, sendResponse) => {
+        await showListScreen();
+        sendResponse({ result: 'success' });
     }
 }
 
 async function init() {
     await destroyOverlayIfExists();
     await showFlashcardIfNeeded();
+    // Listens for broadcasts from background.ts
+    browser.runtime.onMessage.addListener(handleBroadcastReceived);
 }
 
 if (document.readyState === 'loading') {

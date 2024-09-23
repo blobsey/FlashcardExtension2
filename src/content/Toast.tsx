@@ -70,7 +70,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [toasts, setToasts] = useState<(ToastProps & { id: number })[]>([]);
 
     const addToast = useCallback((props: ToastProps) => {
-        setToasts(prev => [{ ...props, id: Date.now(), duration: props.duration || 5000 }, ...prev]);
+        setToasts(prev => [{ ...props, id: Date.now(), duration: props.duration || 3000 }, ...prev]);
     }, []);
 
     return (

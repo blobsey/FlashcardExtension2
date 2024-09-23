@@ -57,6 +57,7 @@ const messageHandlers: Record<string, MessageHandler> = {
     
         browser.alarms.create("showFlashcardAlarm", {
             delayInMinutes: existingTimeGrant / 60000,
+            periodInMinutes: 1
         });
         const alarmInfo = await browser.alarms.get("showFlashcardAlarm");
         console.log('baseTime:', new Date(baseTime).toLocaleString());
@@ -89,7 +90,7 @@ const messageHandlers: Record<string, MessageHandler> = {
         // Open login page
         const tab = await browser.tabs.create({ url: `${apiBaseUrl}/login`, active: true });
 
-        // After successful login, cutomatically close tab after 3 seconds
+        // After successful login, automatically close tab after 3 seconds
         const tabCloser = (tabId: number, changeInfo: any, updatedTab: browser.tabs.Tab) => {
             if (tabId === tab.id && 
                 changeInfo.status === 'complete' && 
@@ -102,6 +103,7 @@ const messageHandlers: Record<string, MessageHandler> = {
                             throw new Error('Authentication failed');
                         }
                         setPersistentState('isLoggedIn', true);
+                        sendMessageAllTabs('showFlashcardAlarm');
                     });
             }
         };
@@ -115,13 +117,13 @@ const messageHandlers: Record<string, MessageHandler> = {
             }
         };
         browser.tabs.onRemoved.addListener(listenerRemover);
-        
         sendResponse({result: 'success'});
     },
     'logout': async (message, sender, sendResponse) => {
         const apiBaseUrl = await getPersistentState('apiBaseUrl');
         await browser.storage.local.clear();
         await setPersistentState('apiBaseUrl', apiBaseUrl);
+        await sendMessageAllTabs('closeOverlayAllTabs');
         const data = await handleApiRequest("/logout");
         sendResponse({result: 'success', response: data});
     },

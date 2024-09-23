@@ -147,28 +147,70 @@ const Dashboard: React.FC = () => {
         }
     }, [editingSiteIndex]);
 
+    const createOverlayInCurrentTab = async (action: string) => {
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        if (tabs.length > 0) {
+            const currentTab = tabs[0];
+            if (currentTab && currentTab.id) {
+                await browser.tabs.sendMessage(currentTab.id, { action });
+                window.close();
+            }
+        }
+    };
+
+    const handleShowFlashcard = () => createOverlayInCurrentTab('showFlashcard');
+
+    const handleShowListScreen = () => createOverlayInCurrentTab('showListScreen');
+
     return (
-        <div className="p-4 w-full flex flex-col items-center">
+        <div className="p-2 w-full flex flex-col items-center">
             <div>Logged in to:</div>
             <code>{apiBaseUrl}</code>
             
-            <div className="mt-4">
-                <label htmlFor="maxNewCards" className="block mb-2">Max new cards per day:</label>
-                <input
-                    id="maxNewCards"
-                    type="number"
-                    value={localUserData?.max_new_cards ?? ''}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded"
-                    min="0"
-                />
-            </div>
-            
-            <div className="mt-4 w-full">
-                <h4 className="font-semibold mb-2">Blocked Sites</h4>
-                <ul>
+            <div className="w-full mt-2">
+                <div className="w-full mx-auto grid grid-cols-2 gap-2">
+                    <button 
+                        onClick={handleShowFlashcard}
+                        className="p-2 text-center bg-white/5 rounded hover:bg-white/10 transition-colors duration-200"
+                    >
+                        Show me a flashcard
+                    </button>
+                    <button 
+                        className="p-2 text-center bg-white/5 rounded hover:bg-white/10 transition-colors duration-200"
+                        onClick={handleShowListScreen}
+                    >
+                        List flashcards
+                    </button>
+                    <button className="p-2 text-center bg-white/5 rounded hover:bg-white/10 transition-colors duration-200">
+                        Add flashcards
+                    </button>
+                    <button
+                        onClick={() => browser.runtime.sendMessage({ action: 'logout' })}
+                        className="p-2 text-center bg-red-500/25 rounded hover:bg-red-500/50 transition-colors duration-200"
+                    >
+                        Logout
+                    </button>
+                </div>
+
+                <hr className="mx-auto my-2 border-white/10 w-[98%]"/>
+
+                <h4 className="font-semibold ml-1 mt-2">Settings</h4>
+                <div className="flex flex-row w-full p-2 pr-4 items-center bg-black/20 rounded">
+                    <label htmlFor="maxNewCards" className="flex-grow whitespace-nowrap mr-2">Max new cards per day:</label>
+                    <input
+                        id="maxNewCards"
+                        type="number"
+                        value={localUserData?.max_new_cards ?? ''}
+                        onChange={handleInputChange}
+                        className="w-12 text-center focus:rounded"
+                        min="0"
+                    />
+                </div>
+
+                <h4 className="font-semibold ml-1 mt-2">Blocked Sites</h4>
+                <ul className="bg-black/20 p-2 rounded overflow-y-auto max-h-80">
                     {localUserData?.blocked_sites && localUserData?.blocked_sites.map((site, index) => (
-                        <li key={index} className="flex items-center mb-2">
+                        <li key={index} className="flex items-center mb-1 ml-1">
                             <Checkbox.Root
                                 className="flex h-5 w-5 items-center justify-center rounded border border-gray-300 bg-transparent hover:bg-gray-100/25 focus:outline-white transition-colors duration-200"
                                 checked={site.active}
@@ -186,7 +228,7 @@ const Dashboard: React.FC = () => {
                                             type="text"
                                             value={editingSiteText}
                                             onChange={(e) => setEditingSiteText(e.target.value)}
-                                            className="flex-grow pl-2 p-1 border-none text-sm rounded"
+                                            className="flex-grow pl-2 border-none text-sm rounded"
                                         />
                                         <button
                                             onClick={handleSaveEdit}
@@ -203,7 +245,7 @@ const Dashboard: React.FC = () => {
                                     </>
                                     :
                                     <>
-                                        <span className="ml-2 flex-grow">{site.url}</span>
+                                        <span className="ml-2 flex-grow text-white/50">{site.url}</span>
                                         <button
                                             onClick={() => handleEditSite(index)}
                                             className="p-1 ml-2 text-white/50 hover:text-white"
@@ -223,21 +265,22 @@ const Dashboard: React.FC = () => {
                     ))}
                     <button
                         onClick={handleAddSite}
-                        className="w-full p-2 flex items-center justify-center bg-transparent hover:bg-white/10"
+                        className="w-[98%] p-2 m-auto flex items-center justify-center bg-white/5 rounded hover:bg-white/10"
                     >
                         <PlusIcon />
                     </button>
                 </ul>
             </div>
             
-            <div className="mt-2 flex-row items-start w-full">
+            {/* Remove the old logout button section */}
+            {/* <div className="mt-2 flex-row items-start w-full">
                 <button
                     onClick={() => browser.runtime.sendMessage({ action: 'logout' })}
                     className="px-4 py-1 bg-red-500/25 text-white rounded hover:bg-red-500/50"
                 >
                     Logout
                 </button>
-            </div>
+            </div> */}
         </div>
     );
 };

@@ -10,6 +10,8 @@ export interface UserData {
     blocked_sites: BlockedSite[];
 }
 
+export type Screen = 'flashcard' | 'grade' | 'review' | 'edit' | 'list';
+
 export interface ScreenProps {
     goBack: () => void;
     navigateTo: (path: string) => void;

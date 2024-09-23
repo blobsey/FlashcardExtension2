@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import FlashcardScreen from "./FlashcardScreen";
 import GradeScreen from "./GradeScreen";
 import usePersistentState from "../common/usePersistentState";
-import { Flashcard } from "../common/types";
+import { Flashcard, Screen } from "../common/types";
 import { reviewFlashcard, 
         editFlashcard, 
         GRADES, 
@@ -15,14 +15,23 @@ import EditScreen from "./EditScreen";
 import { useToast } from "./Toast";
 import { broadcastThroughBackgroundScript } from "./commonContent";
 
-type Screen = 'flashcard' | 'grade' | 'review' | 'edit';
-
 const artificialDelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const Overlay: React.FC = () => {
+interface OverlayProps {
+    initialScreen: Screen; 
+    setCurrentScreenRef?: React.MutableRefObject<((screen: Screen) => void) | null>
+}
+
+const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef }) => {
     // Global states
-    const [currentScreen, setCurrentScreen] = useState<Screen>('flashcard');
-    const [screenHistory, setScreenHistory] = useState<Screen[]>(['flashcard']);
+    const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
+    const [screenHistory, setScreenHistory] = useState<Screen[]>([initialScreen]);
+    // Exposes the setCurrentScreen function to any parent
+    useEffect(() => {
+        if (setCurrentScreenRef) {
+            setCurrentScreenRef.current = setCurrentScreen;
+        }
+    }, [setCurrentScreenRef]);
 
     // FlashcardScreen states
     const [flashcard, setFlashcard] = usePersistentState<Flashcard | null>('flashcard', null);
@@ -137,6 +146,11 @@ const Overlay: React.FC = () => {
                     onCancelButtonClicked={goBack}
                 />
             )}
+            {currentScreen === 'list' && 
+                <div>
+                    List screen!
+                </div>
+            }
         </div>
     );
 };

@@ -27,6 +27,15 @@ export async function updateUserData(userData: Partial<UserData>): Promise<void>
     }
 }
 
+/* Utility function to get the current screen, or null if overlay not active */
+export function getCurrentScreen(): string | null {
+    return document
+    .getElementById('blobsey-host')
+    ?.shadowRoot
+    ?.getElementById('blobsey-overlay')
+    ?.dataset.currentScreen ?? null;
+}
+
 /* This function fetches a flashcard from the /next path in the API
 and then overwrites the 'flashcard' persistent (global) state 
 The function should be used whenever a new flashcard should be fetched
