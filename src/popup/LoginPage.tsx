@@ -7,19 +7,19 @@ const LoginPage: React.FC = () => {
 
     return (
         <>
-        <div>
-            <input type='text'
-            value={apiBaseUrl}
-            onChange={(e) => setApiBaseUrl(e.target.value)}
-            placeholder='apiBaseUrl'>
+            <input 
+                className='w-full mb-2 text-center focus:rounded'
+                type='text'
+                value={apiBaseUrl}
+                onChange={(e) => setApiBaseUrl(e.target.value)}
+                placeholder='apiBaseUrl'>
             </input>
-        </div>
-        <div>
             <button
-            onClick={() => browser.runtime.sendMessage({action: 'login'})}>
-                Login
+                className='p-2 text-center bg-white/5 rounded hover:bg-white/10 transition-colors duration-200'
+                onClick={() => browser.runtime.sendMessage({action: 'login'})}
+            >
+                Login with Google
             </button>           
-        </div>
         </>
     );
 };

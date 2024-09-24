@@ -185,12 +185,12 @@ export async function destroyOverlayIfExists(): Promise<void> {
         document.removeEventListener('focusin', handleFocusIn);
     }
 
-    if (window.location.href.includes('blank.html')) {
-        window.history.back();
-    }
+    // CLean up global vars
+    toast = null;
+    setCurrentScreenRef.current = null;
 
-    if (toast) {
-        toast = null;
+    if (window.location.href.includes('fallback.html')) {
+        window.history.back();
     }
 }
 
@@ -258,8 +258,8 @@ const handleBroadcastReceived = (
     sendResponse: (response?: any) => void) => {
         const handler = messageHandlers[message.action];
         if (!handler) {
-            console.error(`Unknown action "${message.action}"`);
-            sendResponse({result: 'error', message: 'Unknown action'});
+            console.log(`Unknown action "${message.action}"`);
+            return;
         }
 
         console.log('Calling handler for:', message);
@@ -290,19 +290,62 @@ const messageHandlers: Record<string, MessageHandler> = {
         setTimeout(async () => await showFlashcardIfNeeded(), delay);
         sendResponse({ result: 'success' });
     },
-    'showFlashcard': async (message, sender, sendResponse) => {
-        await showFlashcard();
-        sendResponse({ result: 'success' });
-    },
-    'showListScreen': async (message, sender, sendResponse) => {
-        await showListScreen();
+    'createOverlayInCurrentTab': async (message, sender, sendResponse) => {
+        await forceCreateOverlay(message.screenToOpen);
         sendResponse({ result: 'success' });
     }
 }
 
+async function forceCreateOverlay(screenToOpen: string) {
+    switch (screenToOpen) {
+        case 'showFlashcard':
+            await showFlashcard();
+        case 'showListScreen':
+            await showListScreen();
+    }
+}
+
 async function init() {
-    await destroyOverlayIfExists();
-    await showFlashcardIfNeeded();
+    /* Check if we are in fallback.html; if we are then that means the user pressed
+    'Add flashcards' or possibly 'Show me a flashcard'/'List flashcards' which threw 
+    an error. This occurs only when Popup.tsx manually opens fallback.html, and saves
+    screenshot data to local storage. Try to retrieve that, but don't fail everything 
+    if we fail to retrieve the screenshot data */
+    if (window.location.href.startsWith(browser.runtime.getURL('fallback.html'))) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const screen = urlParams.get('screen');
+        const tabId = urlParams.get('tabId');
+        
+        if (tabId) {
+            try {
+                const tabInfo = await browser.storage.local.get(`tabInfo_${tabId}`);
+                if (tabInfo[`tabInfo_${tabId}`]) {
+                    const { screenshotUrl, favicon } = tabInfo[`tabInfo_${tabId}`];
+                    
+                    // Set background
+                    document.body.style.backgroundImage = `url(${screenshotUrl})`;
+                    document.body.style.backgroundSize = 'cover';
+                    
+                    // Set favicon
+                    const link = document.createElement('link');
+                    link.rel = 'icon';
+                    link.href = favicon;
+                    document.head.appendChild(link);
+                }
+            } catch (error) {
+                console.error('Error setting fallback background:', error);
+                // If there's an error, we'll just continue without setting the background
+            }
+        }
+        
+        if (screen) {
+            await forceCreateOverlay(screen);
+        }
+    } else {
+        await destroyOverlayIfExists();
+        await showFlashcardIfNeeded();
+    }
+
     // Listens for broadcasts from background.ts
     browser.runtime.onMessage.addListener(handleBroadcastReceived);
 }
