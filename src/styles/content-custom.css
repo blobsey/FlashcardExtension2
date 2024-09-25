@@ -55,7 +55,7 @@ tiles it to get rid of 'halo-effect' with cheap blur */
 }
 
 /* Mostly aesthetic styles past this point */
-#blobsey-overlay button {
+/* #blobsey-overlay button {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -87,7 +87,7 @@ tiles it to get rid of 'halo-effect' with cheap blur */
     border-color: rgba(255, 255, 255, 0.5);
     cursor: default;
     background-color: rgba(255, 255, 255, 0.1);
-}
+} */
 
 #blobsey-overlay pre, #blobsey-overlay code {
     font: 14px monospace, system-ui, sans-serif; 

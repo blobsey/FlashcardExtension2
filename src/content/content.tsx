@@ -44,6 +44,12 @@ async function showFlashcardIfNeeded(): Promise<void> {
         }
     }
 
+    // If flashcard is already showing, don't call showFlashcard() again 
+    const currentScreen = getCurrentScreen();
+    if (currentScreen && ['flashcard', 'grade', 'review'].includes(currentScreen)) {
+        return;
+    }
+
     // If the nextFlashcardTime has passed, show flashcard
     const nextFlashcardTime = await getPersistentState<number>('nextFlashcardTime');
     const currentTime = Date.now();
@@ -53,16 +59,6 @@ async function showFlashcardIfNeeded(): Promise<void> {
 }
 
 async function showFlashcard(): Promise<void> {
-    /* showFlashcard() can be called manually by user, but we *probably* don't want to reset the
-    current flashcard review loop, so return early in this edge case */
-    const currentScreen = getCurrentScreen();
-    if (currentScreen && ['flashcard', 'grade', 'review'].includes(currentScreen)) {
-        if (toast) {
-            toast({ content: 'Already showing a flashcard!' });
-        }
-        return;
-    }
-
     console.log('Showing a flashard');
 
     // Calculate existing initial time grant, will be added to by grantTime()
@@ -85,6 +81,7 @@ async function showFlashcard(): Promise<void> {
     }
 
     if (setCurrentScreenRef.current) {
+        console.log('Overlay already active, setting existing overlay to flashcard screen');
         setCurrentScreenRef.current('flashcard');
     }
     else {
@@ -94,6 +91,7 @@ async function showFlashcard(): Promise<void> {
 
 async function showListScreen(): Promise<void> {
     if (setCurrentScreenRef.current) {
+        console.log('Overlay already active, setting existing overlay to list screen');
         setCurrentScreenRef.current('list');
     }
     else {
@@ -291,7 +289,7 @@ const messageHandlers: Record<string, MessageHandler> = {
         sendResponse({ result: 'success' });
     },
     'createOverlayInCurrentTab': async (message, sender, sendResponse) => {
-        await forceCreateOverlay(message.screenToOpen);
+        await forceCreateOverlay(message.screen);
         sendResponse({ result: 'success' });
     }
 }
@@ -299,9 +297,23 @@ const messageHandlers: Record<string, MessageHandler> = {
 async function forceCreateOverlay(screenToOpen: string) {
     switch (screenToOpen) {
         case 'showFlashcard':
-            await showFlashcard();
+            const currentScreen = getCurrentScreen();
+            if (currentScreen && ['flashcard', 'grade', 'review'].includes(currentScreen)) {
+                /* This path is called when the user manually presses 'Show me a flashcard
+                but we *probably* don't want to reset the current flashcard review loop, 
+                so return early in this edge case */
+                if (toast) { 
+                    toast({content: 'Already showing a flashcard!'});
+                }
+                return;
+            }
+            else {
+                await showFlashcard();
+                break;
+            }
         case 'showListScreen':
             await showListScreen();
+            break;
     }
 }
 

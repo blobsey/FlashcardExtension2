@@ -9,6 +9,7 @@ import { useDebounce } from '../common/useDebounce';
 import { getUserData, updateUserData } from '../common/common';
 import { UserData, BlockedSite } from '../common/types';
 import '../styles/popup-tailwind.css';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../content/Select';
 
 const Popup: React.FC = () => {
     const [apiBaseUrl, _] = usePersistentState('apiBaseUrl', '');
@@ -142,6 +143,17 @@ const Popup: React.FC = () => {
         }
     };
 
+    const handleDeckChange = (value: string) => {
+        console.log('Deck changed to:', value);
+        setLocalUserData(prevData => {
+            if (!prevData) return prevData;
+            
+            const updatedData = { ...prevData, deck: value };
+            updateUserData(updatedData);
+            return updatedData;
+        });
+    };
+
     // Auto focus input when editing a site
     useEffect(() => {
         if (editingSiteIndex !== null) {
@@ -247,6 +259,29 @@ const Popup: React.FC = () => {
                         className="w-12 text-center focus:rounded"
                         min="0"
                     />
+                </div>
+
+                <div className="flex flex-row w-full p-2 pr-4 items-center bg-black/20 rounded mt-2">
+                    <label className="flex-grow whitespace-nowrap mr-2">Current deck:</label>
+                    <Select 
+                        onValueChange={handleDeckChange} 
+                        value={localUserData?.deck}
+                        onOpenChange={(open) => console.log('Select opened:', open)}
+                    >
+                        <SelectTrigger 
+                            className="w-[180px]" 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('SelectTrigger clicked');
+                            }}
+                        >
+                            <SelectValue placeholder="Select a deck" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="SDE@AWS">SDE@AWS</SelectItem>
+                            <SelectItem value="light">Light</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <h4 className="font-semibold ml-1 mt-2">Blocked Sites</h4>

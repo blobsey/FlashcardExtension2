@@ -12,6 +12,7 @@ import { reviewFlashcard,
 import '../styles/content-tailwind.css';
 import ReviewScreen from "./ReviewScreen";
 import EditScreen from "./EditScreen";
+import ListScreen from "./ListScreen"
 import { useToast } from "./Toast";
 import { broadcastThroughBackgroundScript } from "./commonContent";
 
@@ -148,7 +149,7 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
             )}
             {currentScreen === 'list' && 
                 <div>
-                    List screen!
+                    <ListScreen />
                 </div>
             }
         </div>
