@@ -2,22 +2,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as Checkbox from '@radix-ui/react-checkbox';
 import LoginPage from './LoginPage';
 import { CheckIcon, Pencil1Icon, TrashIcon, 
-    CheckCircledIcon, CrossCircledIcon, PlusIcon
+    CheckCircledIcon, CrossCircledIcon, PlusIcon,
+    ChevronDownIcon
 } from '@radix-ui/react-icons';
 import usePersistentState from '../common/usePersistentState';
 import { useDebounce } from '../common/useDebounce';
 import { getUserData, updateUserData } from '../common/common';
 import { UserData, BlockedSite } from '../common/types';
 import '../styles/popup-tailwind.css';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../content/Select';
+
 
 const Popup: React.FC = () => {
     const [apiBaseUrl, _] = usePersistentState('apiBaseUrl', '');
     const [localUserData, setLocalUserData] = useState<Partial<UserData> | null>(null);
     const [editingSiteIndex, setEditingSiteIndex] = useState<number | null>(null);
     const [editingSiteText, setEditingSiteText] = useState<string>('');
-    const editInputRef = useRef<HTMLInputElement>(null);
     const [isLoggedIn, __] = usePersistentState('isLoggedIn', false);
+    const editInputRef = useRef<HTMLInputElement>(null);
+    const ulRef = useRef<HTMLUListElement>(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -58,6 +60,12 @@ const Popup: React.FC = () => {
 
         if (inputStr !== '') {
             debouncedSaveFunc();
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            handleSaveEdit();
         }
     };
 
@@ -113,6 +121,12 @@ const Popup: React.FC = () => {
         if (localUserData?.blocked_sites?.length) {
             setEditingSiteIndex(localUserData?.blocked_sites?.length)
         }
+        // Schedule scrolling after the state update and re-render
+        requestAnimationFrame(() => {
+            if (ulRef.current) {
+                ulRef.current.scrollTop = ulRef.current.scrollHeight;
+            }
+        });
     }
 
     const handleSaveEdit = () => {
@@ -160,6 +174,24 @@ const Popup: React.FC = () => {
             editInputRef.current?.focus();
         }
     }, [editingSiteIndex]);
+
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            if (localUserData?.blocked_sites) {
+                const updatedSites = localUserData.blocked_sites.filter(site => site.url.trim() !== '');
+                if (updatedSites.length !== localUserData.blocked_sites.length) {
+                    const updatedData = { ...localUserData, blocked_sites: updatedSites };
+                    updateUserData(updatedData);
+                }
+            }
+        };
+
+        window.addEventListener('unload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('unload', handleBeforeUnload);
+        };
+    }, [localUserData]);
 
     const createOverlayInCurrentTab = async (screen: string) => {
         const tabs = await browser.tabs.query({ active: true, currentWindow: true });
@@ -248,7 +280,6 @@ const Popup: React.FC = () => {
 
                 <hr className="mx-auto my-2 border-white/10 w-[98%]"/>
 
-                <h4 className="font-semibold ml-1 mt-2">Settings</h4>
                 <div className="flex flex-row w-full p-2 pr-4 items-center bg-black/20 rounded">
                     <label htmlFor="maxNewCards" className="flex-grow whitespace-nowrap mr-2">Max new cards per day:</label>
                     <input
@@ -262,91 +293,99 @@ const Popup: React.FC = () => {
                 </div>
 
                 <div className="flex flex-row w-full p-2 pr-4 items-center bg-black/20 rounded mt-2">
-                    <label className="flex-grow whitespace-nowrap mr-2">Current deck:</label>
-                    <Select 
-                        onValueChange={handleDeckChange} 
-                        value={localUserData?.deck}
-                        onOpenChange={(open) => console.log('Select opened:', open)}
+                    <label htmlFor="deckSelect" className="flex-grow whitespace-nowrap mr-2">Current deck:</label>
+                    <select
+                        id="deckSelect"
+                        value={localUserData?.deck || ''}
+                        onChange={(e) => handleDeckChange(e.target.value)}
+                        className="w-full pl-2 p-1 rounded bg-zinc-800 text-white border-none outline-none appearance-none cursor-pointer focus:outline-white"
+                        style={{
+                            WebkitAppearance: 'none',
+                            MozAppearance: 'none'
+                        }}
                     >
-                        <SelectTrigger 
-                            className="w-[180px]" 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                console.log('SelectTrigger clicked');
-                            }}
-                        >
-                            <SelectValue placeholder="Select a deck" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="SDE@AWS">SDE@AWS</SelectItem>
-                            <SelectItem value="light">Light</SelectItem>
-                        </SelectContent>
-                    </Select>
+                        {localUserData?.decks?.map((deck) => (
+                            <option key={deck} value={deck}>
+                                {deck}
+                            </option>
+                        ))}
+                    </select>
+                    <ChevronDownIcon className="absolute right-4 transform -translate-x-full pointer-events-none" />
                 </div>
 
-                <h4 className="font-semibold ml-1 mt-2">Blocked Sites</h4>
-                <ul className="bg-black/20 p-2 rounded overflow-y-auto max-h-80">
-                    {localUserData?.blocked_sites && localUserData?.blocked_sites.map((site, index) => (
-                        <li key={index} className="flex items-center mb-1 ml-1">
-                            <Checkbox.Root
-                                className="flex h-5 w-5 items-center justify-center rounded border border-gray-300 bg-transparent hover:bg-gray-100/25 focus:outline-white transition-colors duration-200"
-                                checked={site.active}
-                                onCheckedChange={() => handleSiteActiveChange(index)}
-                            >
-                                <Checkbox.Indicator className="text-white">
-                                    <CheckIcon />
-                                </Checkbox.Indicator>
-                            </Checkbox.Root>
-                                <div className='flex-grow flex h-6 ml-2'>
-                                {editingSiteIndex === index ? 
-                                    <>
-                                        <input
-                                            ref={editInputRef}
-                                            type="text"
-                                            value={editingSiteText}
-                                            onChange={(e) => setEditingSiteText(e.target.value)}
-                                            className="flex-grow pl-2 border-none text-sm rounded"
-                                        />
-                                        <button
-                                            onClick={handleSaveEdit}
-                                            className="p-1 ml-2 text-green-500 hover:text-green-700"
-                                        >
-                                            <CheckCircledIcon />
-                                        </button>
-                                        <button
-                                            onClick={handleCancelEdit}
-                                            className="p-1 ml-2 text-red-500 hover:text-red-700"
-                                        >
-                                            <CrossCircledIcon />
-                                        </button>
-                                    </>
-                                    :
-                                    <>
-                                        <span className="ml-2 flex-grow text-white/50">{site.url}</span>
-                                        <button
-                                            onClick={() => handleEditSite(index)}
-                                            className="p-1 ml-2 text-white/50 hover:text-white"
-                                        >
-                                            <Pencil1Icon />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteSite(index)}
-                                            className="p-1 ml-2 text-red-500 hover:text-red-700"
-                                        >
-                                            <TrashIcon />
-                                        </button>
-                                    </>
-                                }
-                            </div>
-                        </li>
-                    ))}
-                    <button
-                        onClick={handleAddSite}
-                        className="w-[98%] p-2 m-auto flex items-center justify-center bg-white/5 rounded hover:bg-white/10"
-                    >
-                        <PlusIcon />
-                    </button>
-                </ul>
+                <div className='bg-black/20 p-2 rounded mt-2'>
+                    <div className="ml-1 w-full mb-2">
+                        Blocked Sites
+                        <button
+                            onClick={handleAddSite}
+                            disabled={editingSiteIndex !== null}
+                            className={`absolute right-0 transform -translate-x-3/4 translate-y-1/8 scale-150 p-1 rounded ${
+                                editingSiteIndex === null
+                                    ? 'hover:bg-white/10'
+                                    : 'opacity-0 cursor'
+                            }`}
+                        >
+                            <PlusIcon />
+                        </button>
+                    </div>
+                    <ul ref={ulRef} className="overflow-y-auto max-h-72">
+                        {localUserData?.blocked_sites && localUserData?.blocked_sites.map((site, index) => (
+                            <li key={index} className="flex items-center mb-1 ml-1">
+                                <Checkbox.Root
+                                    className="flex h-5 w-5 items-center justify-center rounded border border-gray-300 bg-transparent hover:bg-gray-100/25 focus:outline-white transition-colors duration-200"
+                                    checked={site.active}
+                                    onCheckedChange={() => handleSiteActiveChange(index)}
+                                >
+                                    <Checkbox.Indicator className="text-white">
+                                        <CheckIcon />
+                                    </Checkbox.Indicator>
+                                </Checkbox.Root>
+                                    <div className='flex-grow flex h-6 ml-2'>
+                                    {editingSiteIndex === index ? 
+                                        <>
+                                            <input
+                                                ref={editInputRef}
+                                                type="text"
+                                                value={editingSiteText}
+                                                onChange={(e) => setEditingSiteText(e.target.value)}
+                                                onKeyDown={handleKeyDown}
+                                                className="flex-grow pl-2 border-none text-sm rounded"
+                                            />
+                                            <button
+                                                onClick={handleSaveEdit}
+                                                className="p-1 ml-2 text-green-500 hover:text-green-700"
+                                            >
+                                                <CheckCircledIcon />
+                                            </button>
+                                            <button
+                                                onClick={handleCancelEdit}
+                                                className="p-1 ml-2 text-red-500 hover:text-red-700"
+                                            >
+                                                <CrossCircledIcon />
+                                            </button>
+                                        </>
+                                        :
+                                        <>
+                                            <span className="ml-2 flex-grow text-white/50">{site.url}</span>
+                                            <button
+                                                onClick={() => handleEditSite(index)}
+                                                className="p-1 ml-2 text-white/50 hover:text-white"
+                                            >
+                                                <Pencil1Icon />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteSite(index)}
+                                                className="p-1 ml-2 text-red-500 hover:text-red-700"
+                                            >
+                                                <TrashIcon />
+                                            </button>
+                                        </>
+                                    }
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             </div>
         </div>
     );

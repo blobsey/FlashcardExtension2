@@ -3,7 +3,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 
 const ListScreen: React.FC = () => {
   return (
-    <Select>
+    <>
+        <Select>
       <SelectTrigger>
         <SelectValue placeholder="Select an option" />
       </SelectTrigger>
@@ -13,6 +14,9 @@ const ListScreen: React.FC = () => {
         <SelectItem value="option3">Option 3</SelectItem>
       </SelectContent>
     </Select>
+
+    </>
+
   )
 }
 
