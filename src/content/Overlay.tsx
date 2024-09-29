@@ -24,9 +24,15 @@ interface OverlayProps {
 }
 
 const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef }) => {
-    // Global states
     const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
     const [screenHistory, setScreenHistory] = useState<Screen[]>([initialScreen]);
+
+    // Update screen history whenever currentScreen changes
+    useEffect(() => {
+        setScreenHistory(prev => [...prev, currentScreen]);
+        console.log(screenHistory);
+    }, [currentScreen]);
+
     // Exposes the setCurrentScreen function to any parent
     useEffect(() => {
         if (setCurrentScreenRef) {
@@ -48,15 +54,10 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
     // Toasts for showing info, errors, etc.
     const toast = useToast();
 
-    const navigateTo = (screen: Screen) => {
-        setScreenHistory(prev => [...prev, screen]);
-        setCurrentScreen(screen);
-    };
-
     const goBack = () => {
         if (screenHistory.length > 1) {
             const newHistory = [...screenHistory];
-            newHistory.pop();
+            newHistory.pop(); // Remove the previous screen
             setScreenHistory(newHistory);
             setCurrentScreen(newHistory[newHistory.length - 1]);
         }
@@ -69,7 +70,7 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
                     flashcard={flashcard}
                     onFlipPressed={() => {
                         setReviewingFlashcard(flashcard);
-                        navigateTo('grade');
+                        setCurrentScreen('grade');
                     }}
                 />
             )}
@@ -78,7 +79,7 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
                     onGradeButtonClick={async (grade: typeof GRADES[number]) => {
                         await reviewFlashcard(reviewingFlashcard.card_id, grade);
                         await grantTime(1000 * 60); // 1 minute
-                        navigateTo('review');
+                        setCurrentScreen('review');
                     }}
                     flashcard={reviewingFlashcard}
                     isFlipAnimationDone={isFlipAnimationDone}
@@ -91,7 +92,7 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
                     areFlashcardsRemaining={flashcard !== null}
                     onEditButtonClick={() => {
                         setEditingFlashcard(reviewingFlashcard);
-                        navigateTo('edit');
+                        setCurrentScreen('edit');
                     }}
                     onConfirmButtonClick={async () => {
                         /* Redeem time, and close any flashcard-showing 
@@ -107,7 +108,7 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
                     onAnotherButtonClick={() => {
                         setIsFlipAnimationDone(false);
                         setIsReviewAnimationDone(false);
-                        navigateTo('flashcard');
+                        setCurrentScreen('flashcard');
                     }}
                     isReviewAnimationDone={isReviewAnimationDone}
                     setIsReviewAnimationDone={setIsReviewAnimationDone}
@@ -115,7 +116,7 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
             )}
             {currentScreen === 'edit' && editingFlashcard && (
                 <EditScreen
-                    flashcard={{...reviewingFlashcard}}
+                    flashcard={editingFlashcard}
                     setFlashcard={(updates: Partial<Flashcard> | null) => {
                         // Ugly, but this function is to reconcile the difference
                         // between a Partial<Flashcard> and a Flashcard
@@ -144,13 +145,19 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
                             toast({content: `Error editing flashcard: ${error}`});
                         }
                     }}
+                    onDeleteButtonClicked={async (flashcard: Partial<Flashcard> | null) => {
+
+                    }}
                     onCancelButtonClicked={goBack}
                 />
             )}
             {currentScreen === 'list' && 
-                <div>
-                    <ListScreen />
-                </div>
+                <ListScreen 
+                    onFlashcardClicked={(flashcard: Flashcard) => {
+                        setEditingFlashcard(flashcard);
+                        setCurrentScreen('edit');
+                    }}
+                />
             }
         </div>
     );

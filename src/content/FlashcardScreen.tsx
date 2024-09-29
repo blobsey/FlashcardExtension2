@@ -19,7 +19,7 @@ const FlashcardScreen: React.FC<FlashcardScreenProps> = ({
             </div>
         </div>
         <div className="flex flex-row mt-4 space-x-4">
-            <button onClick={onFlipPressed}>
+            <button className='blobsey-btn' onClick={onFlipPressed}>
                 Flip
             </button>
         </div>

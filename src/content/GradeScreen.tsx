@@ -49,7 +49,7 @@ function GradeScreen({ onGradeButtonClick, flashcard, isFlipAnimationDone: isFli
                     id={`blobsey-grade-button-${grade.toLowerCase()}`}
                     onClick={() => handleGradeClick(grade)}
                     disabled={isLoading}
-                    className={`transform transition-[transform,opacity] duration-300 ${
+                    className={`blobsey-btn transform transition-[transform,opacity] duration-300 ${
                         isFlipAnimationDone 
                             ? 'translate-y-0 opacity-100' 
                             : 'translate-y-4 opacity-0'

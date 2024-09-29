@@ -7,6 +7,7 @@ interface EditScreenProps {
     flashcard: Partial<Flashcard> | null;
     setFlashcard: (flashcard: Partial<Flashcard> | null) => void;
     onSaveButtonClicked: (updatedFlashcard: Partial<Flashcard> | null) => Promise<Flashcard | void>;
+    onDeleteButtonClicked: (flashcard: Partial<Flashcard> | null) => Promise<void>;
     onCancelButtonClicked? : () => void;
 }
 
@@ -69,8 +70,8 @@ const EditScreen: React.FC<EditScreenProps> = ({
             isPreviewEnabled={isPreviewEnabled}
         />
         <div className='flex flex-row items-center space-x-4 mt-4'>
-            <button onClick={handleCancel}>Cancel</button>
-            <button onClick={handleSave}>Save</button>
+            <button className='blobsey-btn' onClick={handleCancel}>Cancel</button>
+            <button className='blobsey-btn' onClick={handleSave}>Save</button>
         </div>
     </div>
     </>

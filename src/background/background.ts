@@ -171,6 +171,29 @@ const messageHandlers: Record<string, MessageHandler> = {
             body: JSON.stringify(message.data)
         });
         sendResponse({result: 'success', ...data});
+    },
+    'listFlashcards': async (message, sender, sendResponse) => {
+        const { action: _, deck, lastEvaluatedKey } = message;
+        
+        const queryParams = new URLSearchParams();
+        if (deck) {
+            queryParams.append('deck', deck);
+        }
+        if (lastEvaluatedKey) {
+            queryParams.append('last_evaluated_key', lastEvaluatedKey);
+        }
+
+        console.log(queryParams);
+
+        const path = `/list?${queryParams.toString()}`;
+        const data = await handleApiRequest(path);
+        sendResponse({ result: 'success', ...data });
+    },
+    'deleteFlashcard': async (message, sender, sendResponse) => {
+        const data = await handleApiRequest(`/delete/${message.card_id}`, {
+            method: 'DELETE'
+        });
+        sendResponse({result: 'success', ...data});
     }
 }
 

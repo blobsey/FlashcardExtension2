@@ -12,11 +12,6 @@ export interface UserData {
 
 export type Screen = 'flashcard' | 'grade' | 'review' | 'edit' | 'list';
 
-export interface ScreenProps {
-    goBack: () => void;
-    navigateTo: (path: string) => void;
-}
-
 export interface Flashcard {
     user_id: string;
     card_back: string;
@@ -39,3 +34,8 @@ export type MessageHandler = (
     sender: browser.runtime.MessageSender,
     sendResponse: (response?: any) => void
 ) => Promise<void>;
+
+export interface FlashcardListResponse {
+    flashcards: Flashcard[];
+    nextPage: string | null;
+}

@@ -20,41 +20,7 @@ module.exports = {
     },
   },
   plugins: [
-    require("tailwindcss-animate"),
-    function({ addComponents }) {
-      addComponents({
-        '.btn-blobsey': {
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          textAlign: 'center',
-          width: '6em',
-          padding: '0.25em',
-          cursor: 'pointer',
-          color: 'rgb(255, 255, 255)',
-          borderRadius: '3px',
-          background: 'rgba(255, 255, 255, 0.1)',
-          border: 'transparent',
-          outline: 'none',
-          height: '2rem',
-          lineHeight: '1.25rem',
-          '&:hover': {
-            background: 'rgba(255, 255, 255, 0.2)',
-          },
-          '&:focus': {
-            color: 'rgba(255, 255, 255, 1)',
-            outline: '1px solid rgba(255, 255, 255, .75)',
-            outlineOffset: '-1px',
-          },
-          '&:disabled': {
-            color: 'rgba(255, 255, 255, 0.5)',
-            borderColor: 'rgba(255, 255, 255, 0.5)',
-            cursor: 'default',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          },
-        },
-      })
-    },
+    require("tailwindcss-animate")
   ],
 }
 

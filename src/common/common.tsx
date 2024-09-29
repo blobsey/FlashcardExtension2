@@ -1,7 +1,7 @@
 import React from "react";
 import { setPersistentState, getPersistentState } from "./usePersistentState";
 import { marked } from 'marked';
-import { Flashcard, UserData } from "./types";
+import { Flashcard, UserData, FlashcardListResponse } from "./types";
 import DOMPurify from 'dompurify';
 
 /* All possible grades that can be given to a reviewed flashcard */
@@ -104,6 +104,27 @@ export async function reviewFlashcard(
         await cacheNextFlashcard();
         
         return response.flashcard;
+}
+
+/* Utility function to call /list path of API */
+export async function listFlashcards(
+    deck?: string,
+    lastEvaluatedKey?: string
+): Promise<FlashcardListResponse> {
+    const response = await browser.runtime.sendMessage({
+        action: 'listFlashcards',
+        deck,
+        lastEvaluatedKey
+    });
+
+    if (response.result !== 'success') {
+        throw new Error(`Error fetching flashcards: ${JSON.stringify(response)}`);
+    }
+
+    return {
+        flashcards: response.flashcards,
+        nextPage: response.next_page
+    };
 }
 
 /* Utility function to take a screenshot of the current tab. Will 
