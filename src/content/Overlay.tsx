@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import FlashcardScreen from "./FlashcardScreen";
 import GradeScreen from "./GradeScreen";
 import usePersistentState from "../common/usePersistentState";
-import { Flashcard, Screen } from "../common/types";
+import { Flashcard, Screen, UserData } from "../common/types";
 import { reviewFlashcard, 
         editFlashcard, 
         GRADES, 
         BackButton,
         grantTime,
+        getUserData,
+        listFlashcards,
 } from "../common/common";
 import '../styles/content-tailwind.css';
 import ReviewScreen from "./ReviewScreen";
@@ -29,6 +31,7 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
 
     // Update screen history whenever currentScreen changes
     useEffect(() => {
+        console.log('currentScreen is:', currentScreen);
         setScreenHistory(prev => [...prev, currentScreen]);
         console.log(screenHistory);
     }, [currentScreen]);
@@ -51,6 +54,13 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
     // EditScreen state
     const [editingFlashcard, setEditingFlashcard] = useState<Partial<Flashcard>>({});
 
+    // ListScreen state
+    const [selectedDeck, setSelectedDeck] = useState<string | null>(null);
+    const [searchValue, setSearchValue] = useState<string>('');
+    const [scrollPosition, setScrollPosition] = useState<number>(0);
+    const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+    const [userData, setUserData] = useState<UserData | null>(null);
+
     // Toasts for showing info, errors, etc.
     const toast = useToast();
 
@@ -62,6 +72,38 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
             setCurrentScreen(newHistory[newHistory.length - 1]);
         }
     };
+
+    const loadFlashcards = useCallback(async (deck: string | null) => {
+        setFlashcards([]);
+        let nextPage: string | undefined;
+        do {
+            console.log('loadFlashcards called');
+            const response = await listFlashcards(selectedDeck, nextPage);
+            setFlashcards(prevCards => [...prevCards, ...response.flashcards]);
+            nextPage = response.nextPage ?? undefined;
+        } while (nextPage);
+    }, [selectedDeck])
+
+    // Initial fetch of flashcards for list screen
+    useEffect(() => {
+        console.log('currentScreen is: ', currentScreen);
+        if (currentScreen === 'list' && flashcards.length === 0) {
+            console.log('Listing flashcards because currentScreen is', currentScreen);
+            loadFlashcards(selectedDeck);
+        }
+    }, [currentScreen]);
+
+    // Load a new deck when selected
+    useEffect(() => {
+        if (currentScreen === 'list') {
+            loadFlashcards(selectedDeck);
+        }
+    }, [selectedDeck])
+
+    // Fetches userData once when Overlay mounts. TODO: Is this a good idea?
+    useEffect(() => {
+        getUserData().then((userData) => setUserData(userData));
+    }, [])
 
     return (
         <div id='blobsey-overlay' data-current-screen={currentScreen}>
@@ -151,12 +193,21 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
                     onCancelButtonClicked={goBack}
                 />
             )}
-            {currentScreen === 'list' && 
+            {currentScreen === 'list' && userData && 
                 <ListScreen 
+                    flashcards={flashcards}
+                    decks={userData.decks}
+                    selectedDeck={selectedDeck}
+                    searchValue={searchValue}
+                    scrollPosition={scrollPosition}
+                    setSelectedDeck={setSelectedDeck}
+                    setSearchValue={setSearchValue}
+                    setScrollPosition={setScrollPosition}
                     onFlashcardClicked={(flashcard: Flashcard) => {
                         setEditingFlashcard(flashcard);
                         setCurrentScreen('edit');
                     }}
+                    onBackButtonClicked={goBack}
                 />
             }
         </div>

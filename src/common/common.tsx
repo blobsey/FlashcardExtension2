@@ -108,7 +108,7 @@ export async function reviewFlashcard(
 
 /* Utility function to call /list path of API */
 export async function listFlashcards(
-    deck?: string,
+    deck: string | null,
     lastEvaluatedKey?: string
 ): Promise<FlashcardListResponse> {
     const response = await browser.runtime.sendMessage({
@@ -126,6 +126,7 @@ export async function listFlashcards(
         nextPage: response.next_page
     };
 }
+
 
 /* Utility function to take a screenshot of the current tab. Will 
 return null if the caller tab is not the active tab, because in that 

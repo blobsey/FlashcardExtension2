@@ -44,9 +44,9 @@ async function showFlashcardIfNeeded(): Promise<void> {
         }
     }
 
-    // If flashcard is already showing, don't call showFlashcard() again 
+    // If overlay already up, don't interrupt
     const currentScreen = getCurrentScreen();
-    if (currentScreen && ['flashcard', 'grade', 'review'].includes(currentScreen)) {
+    if (currentScreen) {
         return;
     }
 
@@ -59,7 +59,7 @@ async function showFlashcardIfNeeded(): Promise<void> {
 }
 
 async function showFlashcard(): Promise<void> {
-    console.log('Showing a flashard');
+    console.log('Showing a flashcard');
 
     // Calculate existing initial time grant, will be added to by grantTime()
     const existingTimeGrant = await getPersistentState<number>('existingTimeGrant');

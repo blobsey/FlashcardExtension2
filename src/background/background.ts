@@ -34,6 +34,8 @@ browser.runtime.onMessage.addListener((
             sendResponse({result: 'error', message: 'Unknown action'});
         }
 
+        console.log(`Got message: ${message.action}, calling handler`);
+
         handler(message, sender, sendResponse)
         .catch(error => {
             console.error(`Error handling "${message.action}" message:`, error);
