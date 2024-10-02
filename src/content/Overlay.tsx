@@ -207,6 +207,9 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
                         setCurrentScreen('edit');
                     }}
                     onBackButtonClicked={goBack}
+                    onCreateEmptyDeckClicked={() => {
+                        console.log('createEmptyDeck clicked');
+                    }}
                 />
             }
         </div>

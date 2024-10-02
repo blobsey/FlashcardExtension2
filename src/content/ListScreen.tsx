@@ -3,6 +3,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Flashcard, UserData } from "../common/types";
 import { BackButton, getUserData, listFlashcards, renderMarkdown } from "../common/common";
 import { useDebounce } from "../common/useDebounce";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "./radix-ui/Dropdown";
+import { DotsVerticalIcon, PlusIcon } from "@radix-ui/react-icons";
 
 interface ListScreenProps {
     // Data props
@@ -22,6 +29,7 @@ interface ListScreenProps {
     // Event handlers
     onFlashcardClicked: (flashcard: Flashcard) => void;
     onBackButtonClicked: () => void;
+    onCreateEmptyDeckClicked: () => void;
 };
 
 const ListScreen: React.FC<ListScreenProps> = ({
@@ -34,7 +42,8 @@ const ListScreen: React.FC<ListScreenProps> = ({
     setSearchValue,
     setScrollPosition,
     onFlashcardClicked,
-    onBackButtonClicked
+    onBackButtonClicked,
+    onCreateEmptyDeckClicked
 }) => {
     const debouncedSetSearchValue = useDebounce((value: string) => {
         setSearchValue(value);
@@ -71,7 +80,7 @@ const ListScreen: React.FC<ListScreenProps> = ({
             {/* Top bar */}
             <div className="w-full flex flex-col md:flex-row items-center justify-between p-4 space-y-4 md:space-y-0 md:space-x-4">
                 {/* Left side of top bar */}
-                <div className="flex flex-row items-center space-x-4 w-full md:flex-grow">
+                <div className="flex flex-row items-center space-x-2 w-full md:flex-grow">
                     <BackButton onClick={onBackButtonClicked} />
                     <div className='w-full max-w-[20rem]'>
                         <Select 
@@ -89,15 +98,52 @@ const ListScreen: React.FC<ListScreenProps> = ({
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className='whitespace-nowrap font-bold'>({flashcards?.length ?? 0} flashcards)</div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger className="p-2 rounded hover:bg-white/10">
+                            <PlusIcon className="h-5 w-5" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onSelect={onCreateEmptyDeckClicked}>
+                                Create empty deck
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => console.log("Download deck")}>
+                                Import from CSV...
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
-                {/* Search bar */}
-                <input
-                    type="text"
-                    placeholder="Search flashcards..."
-                    onChange={(e) => debouncedSetSearchValue(e.target.value)}
-                    className="w-full md:w-64 max-w-full md:max-w-[40%] p-2 rounded bg-white/10 outline-none focus:outline-none focus:ring-1 focus:ring-white focus:ring-opacity-50 text-white"
-                />
+                {/* Middle of top bar */}
+                <div className='whitespace-nowrap font-bold'>({flashcards?.length ?? 0} flashcards)</div>
+                {/* Right side of top bar */}
+                <div className="flex w-full flex-row items-end justify-end space-x-4">
+                    {/* Deck context menu */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger className="p-2 rounded hover:bg-white/10">
+                            <DotsVerticalIcon className="h-5 w-5" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onSelect={() => console.log("Set as active deck")}>
+                                Set as active deck
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => console.log("Download deck")}>
+                                Download deck
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => console.log("Delete deck")}>
+                                Delete deck
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => console.log("Rename deck")}>
+                                Rename deck
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    {/* Search bar */}
+                    <input
+                        type="text"
+                        placeholder="Search flashcards..."
+                        onChange={(e) => debouncedSetSearchValue(e.target.value)}
+                        className="w-full md:w-64 max-w-full md:max-w-[20rem] p-2 rounded bg-white/10 outline-none focus:outline-none focus:ring-1 focus:ring-white focus:ring-opacity-50 text-white"
+                    />
+                </div>
             </div>
             
             {/* Grid */}
