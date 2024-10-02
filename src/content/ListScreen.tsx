@@ -84,7 +84,6 @@ const ListScreen: React.FC<ListScreenProps> = ({
         }
     }, [debouncedSetScrollPosition]);
 
-    const [newDeckName, setNewDeckName] = useState('');
     const createDeckInputRef = useRef<HTMLInputElement>(null);
 
     return (
@@ -153,7 +152,6 @@ const ListScreen: React.FC<ListScreenProps> = ({
                                                         e.preventDefault();
                                                         console.log('create!');
                                                         onCreateEmptyDeckClicked();
-                                                        setNewDeckName('');
                                                     }}
                                                     className="blobsey-btn"
                                                 >

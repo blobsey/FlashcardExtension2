@@ -203,11 +203,15 @@ function handleFocusIn() {
     if (!activeElement) {
         return;
     }
+
+    console.log('Handling focusin!');
+    console.log('activeElement:', activeElement);
     
     const focusableElements = getFocusableElements();
     const focusedIndex = focusableElements.indexOf(activeElement);
+    console.log(focusedIndex);
 
-    // If current element is from overlay, find the next and focus it
+    // If current element isn't from overlay, focus the overlay
     if (focusedIndex === -1 && focusableElements.length > 0) {
         focusableElements[0].focus();
     }
@@ -215,18 +219,28 @@ function handleFocusIn() {
 
 /* This returns an array of HTMLElements which are focusable and children
 of the overlay. Used in handleFocusIn() and trapFocus() */
-function getFocusableElements() {
-    const shadowRoot = document.getElementById('blobsey-host')?.shadowRoot;
-    if (!shadowRoot)
+function getFocusableElements(): HTMLElement[] {
+    const host = document.getElementById('blobsey-host');
+    const shadowRoot = host?.shadowRoot;
+    
+    if (!shadowRoot) {
         return [];
+    }
 
-    return Array.from(shadowRoot.querySelectorAll(
-        'button:not([tabindex="-1"]), [href], input:not([tabindex="-1"]), select:not([tabindex="-1"]), textarea:not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])'
-    )).filter(el => {
+    const selector = 'button, [href], input, select, textarea';
+    
+    const elements = [
+        ...Array.from(shadowRoot.querySelectorAll(selector)),
+        ...Array.from(shadowRoot.querySelectorAll('[role="dialog"]') ?? []),
+        ...Array.from(shadowRoot.querySelectorAll('[role="menu"]') ?? [])
+    ];
+
+    return elements.filter(el => {
         const htmlEl = el as HTMLElement;
         const isVisible = !!(htmlEl.offsetWidth || htmlEl.offsetHeight || htmlEl.getClientRects().length);
         const isNotDisabled = !htmlEl.hasAttribute('disabled');
-        return isVisible && isNotDisabled;
+        const isNotHidden = htmlEl.getAttribute('aria-hidden') !== 'true';
+        return isVisible && isNotDisabled && isNotHidden;
     }) as HTMLElement[];
 }
 
