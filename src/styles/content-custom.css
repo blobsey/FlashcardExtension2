@@ -141,9 +141,6 @@ tiles it to get rid of 'halo-effect' with cheap blur */
 }
 
 #blobsey-overlay .blobsey-back-button {
-    position: fixed;
-    top: 0px;
-    left: 0px;
     width: 3rem;
     height: 3rem;
     background: none;
@@ -199,4 +196,35 @@ tiles it to get rid of 'halo-effect' with cheap blur */
     width: calc(100% - 4rem);
     height: 1px;
     background-color: rgba(255, 255, 255, .15);
+}
+
+#blobsey-overlay input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    vertical-align: middle;
+    position: relative;
+}
+
+#blobsey-overlay input[type="checkbox"]:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+#blobsey-overlay input[type="checkbox"]:focus {
+    outline: 1px solid white;
+}
+
+#blobsey-overlay input[type="checkbox"]:checked::before {
+    content: '\2713';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
 }

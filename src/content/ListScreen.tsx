@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./Select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./radix-ui/Select";
 import { Flashcard, UserData } from "../common/types";
 import { BackButton, getUserData, listFlashcards, renderMarkdown } from "../common/common";
 import { useDebounce } from "../common/useDebounce";
@@ -67,18 +67,15 @@ const ListScreen: React.FC<ListScreenProps> = ({
 
     return (
         <>
-        <BackButton onClick={onBackButtonClicked} />
         <div className='w-full h-full flex flex-col items-center'>        
-            <div className='w-full max-w-[60rem] flex flex-col h-full'>
-
-                {/* Top bar */}
-                <div className="w-full flex flex-row pr-4 items-center place-content-between">
-                    <div className="w-2/5 flex flex-row items-center">
+            {/* Top bar */}
+            <div className="w-full flex flex-col md:flex-row items-center justify-between p-4 space-y-4 md:space-y-0 md:space-x-4">
+                {/* Left side of top bar */}
+                <div className="flex flex-row items-center space-x-4 w-full md:flex-grow">
+                    <BackButton onClick={onBackButtonClicked} />
+                    <div className='w-full max-w-[20rem]'>
                         <Select 
                             onValueChange={(value) => setSelectedDeck(value)} 
-                            /* 'selectedDeck as any' is used here as a stupid hack because radix Selects
-                            don't allow for a blank string option, which is my sentinel value for 'all flashcards'
-                            They do allow for null, so I have a SelectItem with value as {null as any} */
                             defaultValue={selectedDeck as any}
                         >
                             <SelectTrigger>
@@ -91,54 +88,55 @@ const ListScreen: React.FC<ListScreenProps> = ({
                                 ))}
                             </SelectContent>
                         </Select>
-                        <div className='m-4 min-w-40 font-bold'>({flashcards?.length ?? 0} flashcards)</div>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Search flashcards..."
-                        onChange={(e) => debouncedSetSearchValue(e.target.value)}
-                        className="ml-4 p-2 rounded bg-white/10 outline-none focus:outline-none focus:ring-1 focus:ring-white focus:ring-opacity-50 text-white"
-                    />
+                    <div className='whitespace-nowrap font-bold'>({flashcards?.length ?? 0} flashcards)</div>
                 </div>
-                
-                {/* Grid */}
-                <div 
-                    className="flex-grow overflow-auto pr-4"
-                    ref={gridRef}
-                    onScroll={handleScroll}
-                >
-                    <div className="grid grid-cols-2 gap-4">
-                        {filteredFlashcards.map(card => (
-                            <button 
-                                key={card.card_id} 
-                                className='rounded bg-white/5 w-full text-left h-48'
-                                onClick={() => {
-                                    console.log(card);
-                                    onFlashcardClicked(card);
-                                }}
-                            >
-                                <div className="flex flex-col items-center h-full">
-                                    <div 
-                                        className="p-2 pb-0 mb-1 max-h-[75%] overflow-hidden text-xs text-center w-full flex-grow"
-                                        style={{
-                                            maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 95%, rgba(0, 0, 0, 0))'
-                                        }}
-                                    >
-                                        {renderMarkdown(card.card_front)}
-                                    </div>
-                                    <hr className="border-white opacity-10"/>
-                                    <div 
-                                        className="p-2 pb-0 mb-2 max-h-[75%] overflow-hidden text-xs text-center w-full flex-grow"
-                                        style={{
-                                            maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 95%, rgba(0, 0, 0, 0))'
-                                        }}
-                                    >
-                                        {renderMarkdown(card.card_back)}
-                                    </div>
+                {/* Search bar */}
+                <input
+                    type="text"
+                    placeholder="Search flashcards..."
+                    onChange={(e) => debouncedSetSearchValue(e.target.value)}
+                    className="w-full md:w-64 max-w-full md:max-w-[40%] p-2 rounded bg-white/10 outline-none focus:outline-none focus:ring-1 focus:ring-white focus:ring-opacity-50 text-white"
+                />
+            </div>
+            
+            {/* Grid */}
+            <div 
+                className="flex-grow overflow-auto pl-2 pr-4 w-full"
+                ref={gridRef}
+                onScroll={handleScroll}
+            >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredFlashcards.map(card => (
+                        <button 
+                            key={card.card_id} 
+                            className='rounded bg-white/5 w-full text-left h-48 hover:bg-white/10'
+                            onClick={() => {
+                                console.log(card);
+                                onFlashcardClicked(card);
+                            }}
+                        >
+                            <div className="flex flex-col items-center h-full">
+                                <div 
+                                    className="p-2 pb-0 mb-1 max-h-[75%] overflow-hidden text-xs text-center w-full flex-grow"
+                                    style={{
+                                        maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 95%, rgba(0, 0, 0, 0))'
+                                    }}
+                                >
+                                    {renderMarkdown(card.card_front)}
                                 </div>
-                            </button>
-                        ))}
-                    </div>
+                                <hr className="border-white opacity-10"/>
+                                <div 
+                                    className="p-2 pb-0 mb-2 max-h-[75%] overflow-hidden text-xs text-center w-full flex-grow"
+                                    style={{
+                                        maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 95%, rgba(0, 0, 0, 0))'
+                                    }}
+                                >
+                                    {renderMarkdown(card.card_back)}
+                                </div>
+                            </div>
+                        </button>
+                    ))}
                 </div>
             </div>
         </div>

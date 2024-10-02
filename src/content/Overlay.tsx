@@ -15,8 +15,8 @@ import '../styles/content-tailwind.css';
 import ReviewScreen from "./ReviewScreen";
 import EditScreen from "./EditScreen";
 import ListScreen from "./ListScreen"
-import { useToast } from "./Toast";
-import { broadcastThroughBackgroundScript } from "./commonContent";
+import { useToast } from "./radix-ui/Toast";
+import { broadcastThroughBackgroundScript } from "../common/common";
 
 const artificialDelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -27,13 +27,13 @@ interface OverlayProps {
 
 const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef }) => {
     const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
-    const [screenHistory, setScreenHistory] = useState<Screen[]>([initialScreen]);
+    const [screenHistory, setScreenHistory] = useState<Screen[]>([]);
 
     // Update screen history whenever currentScreen changes
     useEffect(() => {
         console.log('currentScreen is:', currentScreen);
         setScreenHistory(prev => [...prev, currentScreen]);
-        console.log(screenHistory);
+        console.log([...screenHistory, currentScreen]);
     }, [currentScreen]);
 
     // Exposes the setCurrentScreen function to any parent
@@ -86,7 +86,6 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
 
     // Initial fetch of flashcards for list screen
     useEffect(() => {
-        console.log('currentScreen is: ', currentScreen);
         if (currentScreen === 'list' && flashcards.length === 0) {
             console.log('Listing flashcards because currentScreen is', currentScreen);
             loadFlashcards(selectedDeck);

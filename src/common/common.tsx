@@ -127,7 +127,6 @@ export async function listFlashcards(
     };
 }
 
-
 /* Utility function to take a screenshot of the current tab. Will 
 return null if the caller tab is not the active tab, because in that 
 case the screenshot will be wrong */
@@ -162,10 +161,29 @@ export async function grantTime(time: number) {
     await setPersistentState('existingTimeGrant', existingTimeGrant + time);
 }
 
-/* Components */
+/* !! Should only be used from content scripts !!
+Utility function for sending a message to all tabs. Relies on the 
+'broadcast' message handler in background.ts and handleBroadcastReceived
+in content.tsx */
+export async function broadcastThroughBackgroundScript(action: string) {
+    try {
+        const response = await browser.runtime.sendMessage({
+            action: 'broadcast',
+            broadcastedAction: action
+        });
+        if (response.result !== 'success') {
+            throw new Error(`Broadcast failed: ${response.message}`);
+        }
+    } catch (error) {
+        console.error('Error broadcasting message:', error);
+        throw error;
+    }
+}
+
+/* -- Components -- */
 
 export const BackButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
-    <button className="blobsey-back-button absolute left-4 top-4" onClick={onClick}>
+    <button className="blobsey-back-button" onClick={onClick}>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
         </svg>

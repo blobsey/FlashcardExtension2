@@ -9,7 +9,7 @@ import {
   getCurrentScreen
 } from '../common/common';
 import { Flashcard, BlockedSite, Screen } from '../common/types';
-import { ToastProvider, useToast } from './Toast';
+import { ToastProvider, useToast } from './radix-ui/Toast';
 import { Message, MessageHandler } from '../common/types';
 
 // Global reference to a React root created through createRoot(), used for destroying the overlay.

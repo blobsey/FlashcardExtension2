@@ -53,9 +53,11 @@ const EditScreen: React.FC<EditScreenProps> = ({
 
     return (
     <>
-    <BackButton onClick={handleCancel} />
+    <div className='absolute top-4 left-4'>
+        <BackButton onClick={handleCancel}/>
+    </div>
     <div className='flex flex-col items-center h-full w-full pt-4'>
-        <label className='flex items-center'>
+        <label className='flex items-center m-2'>
             <input
                 type="checkbox"
                 checked={isPreviewEnabled}
