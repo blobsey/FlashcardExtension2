@@ -55,7 +55,7 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({
                     className={`transition-[transform,opacity] duration-300 ${isReviewAnimationDone 
                         ? 'translate-y-0 opacity-100' 
                         : 'translate-y-4 opacity-0'
-                    } blobsey-btn hover:bg-gray-200`}
+                    } blobsey-btn`}
                     style={{ transitionDelay: `${index * 100}ms` }}
                 >
                     {label}

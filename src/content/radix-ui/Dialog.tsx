@@ -182,6 +182,61 @@ const DialogWithInput: React.FC<DialogWithInputRootProps> = ({
     );
 };
 
+
+interface DialogConfirmProps {
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+}
+
+type DialogConfirmRootProps = DialogPrimitive.DialogProps & DialogConfirmProps;
+
+const DialogConfirm: React.FC<DialogConfirmRootProps> = ({
+    title,
+    description,
+    onConfirm,
+    onCancel,
+    children,
+    ...props
+}) => {
+    const handleConfirm = () => {
+        onConfirm();
+        props.onOpenChange?.(false);
+    };
+    
+    const handleCancel = () => {
+        onCancel();
+        props.onOpenChange?.(false);
+    };
+    
+    return (
+        <Dialog {...props}>
+            {children}
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <button 
+                        onClick={handleCancel}
+                        className="blobsey-btn"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleConfirm}
+                        className="blobsey-btn"
+                    >
+                        Confirm
+                    </button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 export {
     Dialog,
     DialogPortal,
@@ -194,4 +249,5 @@ export {
     DialogTitle,
     DialogDescription,
     DialogWithInput,
+    DialogConfirm
 }

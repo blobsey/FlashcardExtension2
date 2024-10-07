@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import FlashcardScreen from "./FlashcardScreen";
 import GradeScreen from "./GradeScreen";
-import usePersistentState from "../common/usePersistentState";
-import { Flashcard, Screen, UserData } from "../common/types";
+import usePersistentState, { getPersistentState } from "../common/usePersistentState";
+import { BlockedSite, Flashcard, Screen, UserData } from "../common/types";
 import { reviewFlashcard, 
         editFlashcard, 
         GRADES, 
-        BackButton,
         grantTime,
         getUserData,
         listFlashcards,
         updateUserData,
         createDeck,
+        deleteFlashcard,
+        shouldShowFlashcard
 } from "../common/common";
 import '../styles/content-tailwind.css';
 import ReviewScreen from "./ReviewScreen";
@@ -19,31 +20,19 @@ import EditScreen from "./EditScreen";
 import ListScreen from "./ListScreen"
 import { useToast } from "./radix-ui/Toast";
 import { broadcastThroughBackgroundScript } from "../common/common";
+import { block } from "marked";
 
 const artificialDelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 interface OverlayProps {
     initialScreen: Screen; 
-    setCurrentScreenRef?: React.MutableRefObject<((screen: Screen) => void) | null>
+    setCurrentScreenRef?: React.MutableRefObject<((screen: Screen) => void) | null>;
+    destroyOverlay: () => Promise<void>;
 }
 
-const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef }) => {
+const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef, destroyOverlay }) => {
     const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
     const [screenHistory, setScreenHistory] = useState<Screen[]>([]);
-
-    // Update screen history whenever currentScreen changes
-    useEffect(() => {
-        console.log('currentScreen is:', currentScreen);
-        setScreenHistory(prev => [...prev, currentScreen]);
-        console.log([...screenHistory, currentScreen]);
-    }, [currentScreen]);
-
-    // Exposes the setCurrentScreen function to any parent
-    useEffect(() => {
-        if (setCurrentScreenRef) {
-            setCurrentScreenRef.current = setCurrentScreen;
-        }
-    }, [setCurrentScreenRef]);
 
     // FlashcardScreen states
     const [flashcard, setFlashcard] = usePersistentState<Flashcard | null>('flashcard', null);
@@ -63,20 +52,68 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
     const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
     const [userData, setUserData] = useState<UserData | null>(null);
     const [isFlashcardsLoaded, setIsFlashcardsLoaded] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Toasts for showing info, errors, etc.
     const toast = useToast();
 
-    const goBack = () => {
+    const goBack = async () => {
+        console.log('screenHistory', screenHistory);
         if (screenHistory.length > 1) {
             const newHistory = [...screenHistory];
             newHistory.pop(); // Remove the previous screen
+            console.log(newHistory);
             setScreenHistory(newHistory);
             setCurrentScreen(newHistory[newHistory.length - 1]);
         }
-    };
+        else {
+            let blockedSites = userData?.blocked_sites;
+            if (!blockedSites) {
+                try {
+                    const fetchedUserData = await getUserData();
+                    blockedSites = fetchedUserData.blocked_sites;
+                    setUserData(fetchedUserData);
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                    toast({ content: 'Error fetching user data. Please try again.' });
+                }
+            }
+            
+            if (blockedSites) {
+                const shouldShow = shouldShowFlashcard(
+                    blockedSites,
+                    window.location.href,
+                    flashcard,
+                    await getPersistentState<number>('nextFlashcardTime') ?? Date.now()
+                );
+                
+                if (shouldShow) {
+                    setCurrentScreen('flashcard');
+                } else {
+                    await destroyOverlay();
+                }
+            }
+        }
+    }
+    
 
-    const [isLoading, setIsLoading] = useState(false);
+    // Update screen history whenever currentScreen changes
+    useEffect(() => {
+        console.log('currentScreen is:', currentScreen);
+        if (screenHistory.length === 0 || 
+            currentScreen !== screenHistory[screenHistory.length - 1]) {
+                setScreenHistory(prev => [...prev, currentScreen]);
+                console.log([...screenHistory, currentScreen]);
+        }
+    }, [currentScreen]);
+
+    // Exposes the setCurrentScreen function to any parent
+    useEffect(() => {
+        if (setCurrentScreenRef) {
+            setCurrentScreenRef.current = setCurrentScreen;
+        }
+    }, [setCurrentScreenRef]);
+
     const abortControllerRef = useRef<AbortController | null>(null);
 
     const loadFlashcards = useCallback(async (deck: string | null) => {
@@ -220,7 +257,21 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
                         }
                     }}
                     onDeleteButtonClicked={async (flashcard: Partial<Flashcard> | null) => {
-
+                        try {
+                            if (flashcard && flashcard.card_id) {
+                                setIsLoading(true);
+                                await deleteFlashcard(flashcard.card_id);
+                                toast({ content: "Flashcard deleted successfully!" });
+                                goBack();
+                            } else {
+                                throw new Error('Invalid flashcard data');
+                            }
+                        } catch (error) {
+                            console.error('Error deleting flashcard:', error);
+                            toast({ content: `Error deleting flashcard: ${error}` });
+                        } finally {
+                            setIsLoading(false);
+                        }
                     }}
                     onCancelButtonClicked={goBack}
                 />

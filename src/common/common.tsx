@@ -1,7 +1,7 @@
 import React from "react";
 import { setPersistentState, getPersistentState } from "./usePersistentState";
 import { marked } from 'marked';
-import { Flashcard, UserData, FlashcardListResponse } from "./types";
+import { Flashcard, UserData, FlashcardListResponse, BlockedSite } from "./types";
 import DOMPurify from 'dompurify';
 
 /* All possible grades that can be given to a reviewed flashcard */
@@ -106,6 +106,24 @@ export async function reviewFlashcard(
         return response.flashcard;
 }
 
+/* Utility function to call /delete path of API */
+export async function deleteFlashcard(card_id: string): Promise<void> {
+    const response = await browser.runtime.sendMessage({
+        action: 'deleteFlashcard',
+        card_id
+    });
+
+    if (response.result !== 'success') 
+        throw new Error(`Error deleting flashcard: ${JSON.stringify(response)}`);
+
+    const flashcard = await getPersistentState<Flashcard | null>('flashcard');
+
+    if (flashcard?.card_id === card_id) {
+        await setPersistentState('flashcard', null);
+        await cacheNextFlashcard();
+    }
+}
+
 /* Utility function to call /list path of API */
 export async function listFlashcards(
     deck: string | null,
@@ -170,6 +188,34 @@ Confirm button 'redeems' the time and starts counting down. */
 export async function grantTime(time: number) {
     const existingTimeGrant = await getPersistentState<number>('existingTimeGrant') ?? 0;
     await setPersistentState('existingTimeGrant', existingTimeGrant + time);
+}
+
+export function shouldShowFlashcard(
+    blocked_sites: BlockedSite[],
+    currentUrl: string,
+    flashcard: Flashcard | null,
+    nextFlashcardTime: number
+): boolean {
+    // Check if site is in userData blocked_sites list
+    const isBlockedSite = blocked_sites.some((site: BlockedSite) => {
+        return site.url !== '' && site.active && currentUrl.startsWith(site.url);
+    });
+    if (!isBlockedSite) {
+        return false;
+    }
+
+    // Check if there's a flashcard available
+    if (!flashcard) {
+        return false;
+    }
+
+    // If the nextFlashcardTime has passed, show flashcard
+    const currentTime = Date.now();
+    if (currentTime < nextFlashcardTime) {
+        return false;
+    }
+
+    return true;
 }
 
 /* !! Should only be used from content scripts !!

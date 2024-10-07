@@ -6,7 +6,8 @@ import {
   getUserData,
   takeScreenshotOfCallerTab,
   cacheNextFlashcard,
-  getCurrentScreen
+  getCurrentScreen,
+  shouldShowFlashcard
 } from '../common/common';
 import { Flashcard, BlockedSite, Screen } from '../common/types';
 import { ToastProvider, useToast } from './radix-ui/Toast';
@@ -22,38 +23,23 @@ let toast: null | ReturnType<typeof useToast>;
 let setCurrentScreenRef: React.MutableRefObject<((screen: Screen) => void) | null> = { current: null };
 
 async function showFlashcardIfNeeded(): Promise<void> {
+    /* Check first if we should show flashcard, but don't interrupt user if not
+    Also check if the overlay is already up. If so, then don't interrupt the user
+    (Flashcard will be shown when they navigate back far enough) */
     const userData = await getUserData();
-
-    // Check if site is in userData blocked_sites list
-    const currentUrl = window.location.href;
-    const isBlockedSite = userData.blocked_sites.some((site: BlockedSite) => {
-        return site.url !== '' && site.active && currentUrl.startsWith(site.url);
-    });
-    if (!isBlockedSite) {
-        return;
-    }
-
-    /* Check if /next gives us null. If so, there are no more flashcards to review
-    and return early */
-    const flashcard = await getPersistentState<Flashcard | null>('flashcard');
+    let flashcard = await getPersistentState<Flashcard | null>('flashcard');
     if (!flashcard) {
         await cacheNextFlashcard();
-        const newFlashcard = await getPersistentState<Flashcard | null>('flashcard');
-        if (!newFlashcard) {
-            return;
-        }
+        flashcard = await getPersistentState<Flashcard | null>('flashcard');
     }
-
-    // If overlay already up, don't interrupt
-    const currentScreen = getCurrentScreen();
-    if (currentScreen) {
-        return;
-    }
-
-    // If the nextFlashcardTime has passed, show flashcard
-    const nextFlashcardTime = await getPersistentState<number>('nextFlashcardTime');
-    const currentTime = Date.now();
-    if (!nextFlashcardTime || currentTime >= nextFlashcardTime) {
+    const shouldShow = shouldShowFlashcard(
+        userData.blocked_sites,
+        window.location.href,
+        flashcard,
+        await getPersistentState<number>('nextFlashcardTime') ?? Date.now()
+    );
+    
+    if (shouldShow && !getCurrentScreen()) {
         await showFlashcard();
     }
 }
@@ -61,12 +47,13 @@ async function showFlashcardIfNeeded(): Promise<void> {
 async function showFlashcard(): Promise<void> {
     console.log('Showing a flashcard');
 
-    // Calculate existing initial time grant, will be added to by grantTime()
+    /* Get any existing time grant, such as from another tab currently reviewing
+    flashcards. This will be added to by grantTime() */
     const existingTimeGrant = await getPersistentState<number>('existingTimeGrant');
 
-    /* If showFlashcard() gets called after time is redeemed (or for the first time ever)
-    then there won't be an existingTimeGrant, so we need to calculate by subtracting the
-    currentTime from the nextFlashcardTime. */
+    /* If there's no existing time grant, then 'unredeem' any time left, i.e.
+    we need to calculate by subtracting the currentTime from the nextFlashcardTime. 
+    If this is the first ever review, existingTimeGrant will be 0, and thats okay */
     if (!existingTimeGrant) { 
         const currentTime = Date.now();
         const nextFlashcardTime = await getPersistentState<number>('nextFlashcardTime');
@@ -145,6 +132,7 @@ async function createOverlayIfNotExists(initialScreen: Screen): Promise<void> {
             <Overlay 
                 initialScreen={initialScreen}
                 setCurrentScreenRef={setCurrentScreenRef}
+                destroyOverlay={destroyOverlayIfExists}
             />
         </ToastProvider>
     );
