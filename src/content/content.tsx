@@ -122,8 +122,8 @@ async function createOverlayIfNotExists(initialScreen: Screen): Promise<void> {
     }
 
     // Save the original overflow state, then make it 'hidden' to disable scrolling
-    document.body.dataset._blobseyOriginalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.documentElement.dataset._blobseyOriginalOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
 
     // Screenshot webpage before drawing any overlay
     const screenshotUri = await takeScreenshotOfCallerTab();
@@ -175,8 +175,8 @@ export async function destroyOverlayIfExists(): Promise<void> {
         host.remove();
 
         // Restore original scrolling behavior
-        const originalOverflow = document.body.dataset._blobseyOriginalOverflow ?? 'visible';
-        document.body.style.overflow = originalOverflow;
+        const originalOverflow = document.documentElement.dataset._blobseyOriginalOverflow ?? 'visible';
+        document.documentElement.style.overflow = originalOverflow;
 
         // Clean up listeners
         document.removeEventListener('keydown', trapFocus);
