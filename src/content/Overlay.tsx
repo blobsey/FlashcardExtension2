@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import FlashcardScreen from "./FlashcardScreen";
 import GradeScreen from "./GradeScreen";
 import usePersistentState from "../common/usePersistentState";
@@ -10,6 +10,8 @@ import { reviewFlashcard,
         grantTime,
         getUserData,
         listFlashcards,
+        updateUserData,
+        createDeck,
 } from "../common/common";
 import '../styles/content-tailwind.css';
 import ReviewScreen from "./ReviewScreen";
@@ -60,6 +62,7 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
     const [scrollPosition, setScrollPosition] = useState<number>(0);
     const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
     const [userData, setUserData] = useState<UserData | null>(null);
+    const [isFlashcardsLoaded, setIsFlashcardsLoaded] = useState<boolean>(false);
 
     // Toasts for showing info, errors, etc.
     const toast = useToast();
@@ -73,31 +76,61 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
         }
     };
 
+    const [isLoading, setIsLoading] = useState(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
+
     const loadFlashcards = useCallback(async (deck: string | null) => {
+        console.log('loadFlashcards called');                
+        // Cancel any ongoing request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Create a new AbortController for this request
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
+
+        setIsFlashcardsLoaded(false);
         setFlashcards([]);
         let nextPage: string | undefined;
-        do {
-            console.log('loadFlashcards called');
-            const response = await listFlashcards(selectedDeck, nextPage);
-            setFlashcards(prevCards => [...prevCards, ...response.flashcards]);
-            nextPage = response.nextPage ?? undefined;
-        } while (nextPage);
-    }, [selectedDeck])
 
-    // Initial fetch of flashcards for list screen
-    useEffect(() => {
-        if (currentScreen === 'list' && flashcards.length === 0) {
-            console.log('Listing flashcards because currentScreen is', currentScreen);
-            loadFlashcards(selectedDeck);
+        try {
+            do {
+                const response = await listFlashcards(deck, nextPage);
+                if (signal.aborted) { // Stop fetching if deck changes
+                    return;
+                }
+                setFlashcards(prevCards => [...prevCards, ...response.flashcards]);
+                setTimeout(() => setIsFlashcardsLoaded(true), 100);
+                nextPage = response.nextPage ?? undefined;
+            } while (nextPage);
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if (error.name === 'AbortError') {
+                    console.log('Flashcard loading aborted');
+                } else {
+                    console.error('Error loading flashcards:', error);
+                    toast({ content: `Error loading flashcards: ${error.message}` });
+                }
+            }
+        } finally {
+            setIsFlashcardsLoaded(true);
         }
-    }, [currentScreen]);
+    }, []);
 
-    // Load a new deck when selected
+    // Load a new deck when selected or on initial mount
     useEffect(() => {
         if (currentScreen === 'list') {
             loadFlashcards(selectedDeck);
         }
-    }, [selectedDeck])
+        
+        // Cleanup function to abort any ongoing request when component unmounts or deck changes
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [selectedDeck, currentScreen]);
 
     // Fetches userData once when Overlay mounts. TODO: Is this a good idea?
     useEffect(() => {
@@ -199,16 +232,20 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef })
                     selectedDeck={selectedDeck}
                     searchValue={searchValue}
                     scrollPosition={scrollPosition}
+                    isFlashcardsLoaded={isFlashcardsLoaded}
                     setSelectedDeck={setSelectedDeck}
                     setSearchValue={setSearchValue}
                     setScrollPosition={setScrollPosition}
+                    setIsFlashcardsLoaded={setIsFlashcardsLoaded}
                     onFlashcardClicked={(flashcard: Flashcard) => {
                         setEditingFlashcard(flashcard);
                         setCurrentScreen('edit');
                     }}
                     onBackButtonClicked={goBack}
-                    onCreateEmptyDeckClicked={() => {
-                        console.log('createEmptyDeck clicked');
+                    handleCreateEmptyDeck={async (newDeck) => {
+                        await createDeck(newDeck);
+                        const userData = await getUserData();
+                        setUserData(userData);
                     }}
                 />
             }

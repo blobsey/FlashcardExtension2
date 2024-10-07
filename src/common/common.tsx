@@ -127,6 +127,17 @@ export async function listFlashcards(
     };
 }
 
+export async function createDeck(deck: string): Promise<void> {
+    const response = await browser.runtime.sendMessage({
+        action: 'createDeck',
+        deck
+    });
+
+    if (response.result !== 'success') {
+        throw new Error(`Error creating deck: ${JSON.stringify(response)}`);
+    }
+}
+
 /* Utility function to take a screenshot of the current tab. Will 
 return null if the caller tab is not the active tab, because in that 
 case the screenshot will be wrong */

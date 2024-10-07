@@ -164,6 +164,12 @@ const messageHandlers: Record<string, MessageHandler> = {
         });
         sendResponse({result: 'success', ...data})
     },
+    'deleteFlashcard': async (message, sender, sendResponse) => {
+        const data = await handleApiRequest(`/delete/${message.card_id}`, {
+            method: 'DELETE'
+        });
+        sendResponse({result: 'success', ...data});
+    },
     'updateUserData': async (message, sender, sendResponse) => {
         const data = await handleApiRequest("/user-data", {
             method: 'PUT',
@@ -185,16 +191,17 @@ const messageHandlers: Record<string, MessageHandler> = {
             queryParams.append('last_evaluated_key', lastEvaluatedKey);
         }
 
-        console.log(queryParams);
-
         const path = `/list?${queryParams.toString()}`;
         const data = await handleApiRequest(path);
         sendResponse({ result: 'success', ...data });
     },
-    'deleteFlashcard': async (message, sender, sendResponse) => {
-        const data = await handleApiRequest(`/delete/${message.card_id}`, {
-            method: 'DELETE'
+    'createDeck': async (message, sender, sendResponse) => {
+        const { action: _, deck } = message;
+
+        const data = await handleApiRequest(`/create-deck/${deck}`, {
+            method: 'PUT'
         });
+
         sendResponse({result: 'success', ...data});
     }
 }

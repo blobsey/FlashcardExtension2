@@ -16,10 +16,14 @@ import {
     DialogFooter, 
     DialogClose, 
     DialogTitle,
-    DialogTrigger
+    DialogTrigger,
+    DialogWithInput
 } from "./radix-ui/Dialog";
 import { DotsVerticalIcon, PlusIcon } from "@radix-ui/react-icons";
 import { DialogDescription } from "@radix-ui/react-dialog";
+import { useToast } from "./radix-ui/Toast";
+import { CardStackIcon } from "@radix-ui/react-icons";
+import LoadingBig from "./icons/LoadingBig";
 
 interface ListScreenProps {
     // Data props
@@ -30,16 +34,18 @@ interface ListScreenProps {
     selectedDeck: string | null;
     searchValue: string;
     scrollPosition: number;
+    isFlashcardsLoaded: boolean;
 
     // State setters
     setSelectedDeck: (deck: string | null) => void;
     setSearchValue: (value: string) => void;
     setScrollPosition: (position: number) => void;
+    setIsFlashcardsLoaded: (loaded: boolean) => void;
 
     // Event handlers
     onFlashcardClicked: (flashcard: Flashcard) => void;
     onBackButtonClicked: () => void;
-    onCreateEmptyDeckClicked: () => void;
+    handleCreateEmptyDeck: (deckName: string) => Promise<void>;
 };
 
 const ListScreen: React.FC<ListScreenProps> = ({
@@ -48,13 +54,17 @@ const ListScreen: React.FC<ListScreenProps> = ({
     selectedDeck,
     searchValue,
     scrollPosition,
+    isFlashcardsLoaded,
     setSelectedDeck,
     setSearchValue,
     setScrollPosition,
+    setIsFlashcardsLoaded,
     onFlashcardClicked,
     onBackButtonClicked,
-    onCreateEmptyDeckClicked
+    handleCreateEmptyDeck
 }) => {
+    const [isAddDropdownOpen, setIsAddDropdownOpen] = useState<boolean>(false);
+
     const debouncedSetSearchValue = useDebounce((value: string) => {
         setSearchValue(value);
     }, 50);
@@ -68,23 +78,16 @@ const ListScreen: React.FC<ListScreenProps> = ({
 
     const gridRef = useRef<HTMLDivElement>(null);
 
+    // Add useEffect for cleanup
     useEffect(() => {
+        // Set initial scroll position when component mounts
         if (gridRef.current) {
+            console.log('Trying to restore scrollPosition to', scrollPosition);
             gridRef.current.scrollTop = scrollPosition;
         }
-    }, []); // Only set initial scroll position on mount
+    }, [setScrollPosition, scrollPosition]);
 
-    const debouncedSetScrollPosition = useDebounce((position: number) => {
-        setScrollPosition(position);
-    }, 200); // Debounce to update 200ms after scrolling stops
-
-    const handleScroll = useCallback(() => {
-        if (gridRef.current) {
-            debouncedSetScrollPosition(gridRef.current.scrollTop);
-        }
-    }, [debouncedSetScrollPosition]);
-
-    const createDeckInputRef = useRef<HTMLInputElement>(null);
+    const toast = useToast();
 
     return (
         <>
@@ -98,9 +101,9 @@ const ListScreen: React.FC<ListScreenProps> = ({
                         {/* Just select and + button */}
                         <div className='flex flex-row w-full max-w-[20rem] space-x-2'>
                             <div className='w-full'>
-                                <Select 
+                                <Select
+                                    value={selectedDeck ?? null as any}
                                     onValueChange={(value) => setSelectedDeck(value)} 
-                                    defaultValue={selectedDeck as any}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="All flashcards"/>
@@ -113,53 +116,29 @@ const ListScreen: React.FC<ListScreenProps> = ({
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <DropdownMenu>
+                            <DropdownMenu open={isAddDropdownOpen} onOpenChange={setIsAddDropdownOpen}>
                                 <DropdownMenuTrigger className="p-2 rounded hover:bg-white/10">
                                     <PlusIcon className="h-5 w-5" />
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <Dialog> 
+                                    <DialogWithInput
+                                        title='Enter deck name'
+                                        inputPlaceholder="Deck name"
+                                        onSubmit={async (newDeck) => {
+                                            await handleCreateEmptyDeck(newDeck);
+                                            setIsAddDropdownOpen(false);
+                                            setSelectedDeck(newDeck);
+                                            toast({content: `Deck ${newDeck} created successfully`});
+                                        }}
+                                    >
                                         <DialogTrigger asChild>
-                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                            <button 
+                                                className='blobsey-dropdownitem'
+                                            >
                                                 Create empty deck
-                                            </DropdownMenuItem>
+                                            </button>
                                         </DialogTrigger>
-                                        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
-                                            <DialogTitle>New deck name:</DialogTitle>
-                                            <DialogDescription />
-                                            <input
-                                                ref={createDeckInputRef}
-                                                type="text"
-                                                placeholder="Enter deck name"
-                                                className="w-full p-2 rounded bg-white/10 outline-none focus:outline-none focus:ring-1 focus:ring-white focus:ring-opacity-50 text-white"
-                                                autoFocus
-                                            />
-                                            <DialogFooter>
-                                                <DialogClose asChild>
-                                                    <button 
-                                                        onClick={() => {
-                                                            if (createDeckInputRef.current) {
-                                                                createDeckInputRef.current.value = '';
-                                                            }
-                                                        }} 
-                                                        className="blobsey-btn"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </DialogClose>
-                                                <button 
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        console.log('create!');
-                                                        onCreateEmptyDeckClicked();
-                                                    }}
-                                                    className="blobsey-btn"
-                                                >
-                                                    Create
-                                                </button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
+                                    </DialogWithInput>
                                     <DropdownMenuItem onSelect={() => console.log("Download deck")}>
                                         Import from CSV...
                                     </DropdownMenuItem>
@@ -204,43 +183,63 @@ const ListScreen: React.FC<ListScreenProps> = ({
                 </div>
             </div>
             
-            {/* Grid */}
+            {/* Grid or Empty State */}
             <div 
                 className="flex-grow overflow-auto pl-2 pr-4 w-full"
                 ref={gridRef}
-                onScroll={handleScroll}
+                // Remove onScroll prop
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredFlashcards.map(card => (
-                        <button 
-                            key={card.card_id} 
-                            className='rounded bg-white/5 w-full text-left h-48 hover:bg-white/10'
-                            onClick={() => {
-                                console.log(card);
-                                onFlashcardClicked(card);
-                            }}
-                        >
-                            <div className="flex flex-col items-center h-full">
-                                <div 
-                                    className="p-2 pb-0 mb-1 max-h-[75%] overflow-hidden text-xs text-center w-full flex-grow"
-                                    style={{
-                                        maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 95%, rgba(0, 0, 0, 0))'
-                                    }}
-                                >
-                                    {renderMarkdown(card.card_front)}
+            <div style={{ minHeight: `${scrollPosition + (gridRef.current?.clientHeight ?? 0)}px` }}>
+                {filteredFlashcards.length > 0 ? (
+                    <div className="py-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredFlashcards.map(card => (
+                            <button 
+                                key={card.card_id} 
+                                className='rounded bg-white/5 w-full focus:outline-none focus:ring-1 focus:ring-white focus:ring-opacity-50 text-left h-48 hover:bg-white/10 transition-colors ease'
+                                onClick={() => {
+                                    if (gridRef.current) {
+                                        setScrollPosition(gridRef.current.scrollTop);
+                                    }
+                                    onFlashcardClicked(card);
+                                }}
+                            >
+                                <div className="flex flex-col items-center h-full">
+                                    <div 
+                                        className="p-2 pb-0 mb-1 max-h-[75%] overflow-hidden text-xs text-center w-full flex-grow"
+                                        style={{
+                                            maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 95%, rgba(0, 0, 0, 0))'
+                                        }}
+                                    >
+                                        {renderMarkdown(card.card_front)}
+                                    </div>
+                                    <hr className="border-white opacity-10"/>
+                                    <div 
+                                        className="p-2 pb-0 mb-2 max-h-[75%] overflow-hidden text-xs text-center w-full flex-grow"
+                                        style={{
+                                            maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 95%, rgba(0, 0, 0, 0))'
+                                        }}
+                                    >
+                                        {renderMarkdown(card.card_back)}
+                                    </div>
                                 </div>
-                                <hr className="border-white opacity-10"/>
-                                <div 
-                                    className="p-2 pb-0 mb-2 max-h-[75%] overflow-hidden text-xs text-center w-full flex-grow"
-                                    style={{
-                                        maskImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 95%, rgba(0, 0, 0, 0))'
-                                    }}
-                                >
-                                    {renderMarkdown(card.card_back)}
-                                </div>
-                            </div>
-                        </button>
-                    ))}
+                            </button>
+                        ))}
+                    </div>
+                ) : isFlashcardsLoaded ? (
+                    <div className="flex opacity-50 flex-col items-center justify-center h-full text-center">
+                        <CardStackIcon className="w-24 h-24 mb-4 text-gray-400" />
+                        <h3 className="text-xl font-semibold mb-2">No flashcards found</h3>
+                        <p className="text-gray-400">
+                            {searchValue 
+                                ? "Try adjusting your search or select a different deck." 
+                                : "Create your first flashcard to get started!"}
+                        </p>
+                    </div>
+                ) : (
+                    <div className='flex h-full w-full items-center justify-center'>
+                        <LoadingBig className='opacity-50 w-[10%] h-[10%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'/>
+                    </div>
+                )}
                 </div>
             </div>
         </div>
