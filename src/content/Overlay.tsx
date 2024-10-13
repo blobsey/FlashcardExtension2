@@ -21,6 +21,7 @@ import ListScreen from "./ListScreen"
 import { useToast } from "./radix-ui/Toast";
 import { broadcastThroughBackgroundScript } from "../common/common";
 import { block } from "marked";
+import { uploadDeck } from "../common/common";
 
 const artificialDelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -96,7 +97,6 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef, d
         }
     }
     
-
     // Update screen history whenever currentScreen changes
     useEffect(() => {
         console.log('currentScreen is:', currentScreen);
@@ -106,6 +106,13 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef, d
                 console.log([...screenHistory, currentScreen]);
         }
     }, [currentScreen]);
+
+    // Clear out flashcards when not on list screen
+    useEffect(() => {
+        if (currentScreen !== 'list') {
+            setFlashcards([]);
+        }
+    }, [currentScreen])
 
     // Exposes the setCurrentScreen function to any parent
     useEffect(() => {
@@ -173,6 +180,50 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef, d
     useEffect(() => {
         getUserData().then((userData) => setUserData(userData));
     }, [])
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleImportFromFile = useCallback(async () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    }, []);
+
+    const onFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setIsLoading(true);
+
+            // Extract deck name from file name
+            let deckName = file.name.split('.')[0]; // Remove file extension
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('deck', deckName);
+
+            const response = await uploadDeck(formData);
+            toast({ content: response.message });
+            
+            // Refresh the flashcards list and update the selected deck
+            setSelectedDeck(deckName);
+            await loadFlashcards(deckName);
+
+            // Refresh user data to get updated deck list
+            const updatedUserData = await getUserData();
+            setUserData(updatedUserData);
+        } catch (error) {
+            console.error('Error importing file:', error);
+            toast({ content: `Error importing file: ${error}` });
+        } finally {
+            setIsLoading(false);
+            // Reset the file input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    }, [loadFlashcards, setSelectedDeck, toast]);
 
     return (
         <div id='blobsey-overlay' data-current-screen={currentScreen}>
@@ -298,11 +349,18 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef, d
                         const userData = await getUserData();
                         setUserData(userData);
                     }}
+                    handleImportFromFile={handleImportFromFile}
                 />
             }
+            <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={onFileChange}
+                accept=".csv"
+            />
         </div>
     );
 };
 
 export default Overlay;
-

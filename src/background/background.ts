@@ -203,6 +203,20 @@ const messageHandlers: Record<string, MessageHandler> = {
         });
 
         sendResponse({result: 'success', ...data});
+    },
+    'uploadDeck': async (message, sender, sendResponse) => {
+        const { action: _, file, fileName, deck } = message;
+
+        const formData = new FormData();
+        formData.append('file', new Blob([file]), fileName);
+        formData.append('deck', deck);
+
+        const data = await handleApiRequest('/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        sendResponse({ result: 'success', ...data });
     }
 }
 

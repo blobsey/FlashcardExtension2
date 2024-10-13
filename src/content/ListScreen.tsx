@@ -46,6 +46,7 @@ interface ListScreenProps {
     onFlashcardClicked: (flashcard: Flashcard) => void;
     onBackButtonClicked: () => void;
     handleCreateEmptyDeck: (deckName: string) => Promise<void>;
+    handleImportFromFile: () => void;
 };
 
 const ListScreen: React.FC<ListScreenProps> = ({
@@ -61,7 +62,8 @@ const ListScreen: React.FC<ListScreenProps> = ({
     setIsFlashcardsLoaded,
     onFlashcardClicked,
     onBackButtonClicked,
-    handleCreateEmptyDeck
+    handleCreateEmptyDeck,
+    handleImportFromFile,
 }) => {
     const [isAddDropdownOpen, setIsAddDropdownOpen] = useState<boolean>(false);
 
@@ -139,7 +141,7 @@ const ListScreen: React.FC<ListScreenProps> = ({
                                             </button>
                                         </DialogTrigger>
                                     </DialogWithInput>
-                                    <DropdownMenuItem onSelect={() => console.log("Download deck")}>
+                                    <DropdownMenuItem onSelect={handleImportFromFile}>
                                         Import from CSV...
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>

@@ -156,6 +156,24 @@ export async function createDeck(deck: string): Promise<void> {
     }
 }
 
+export async function uploadDeck(formData: FormData): Promise<{ message: string }> {
+    const file = formData.get('file') as File;
+    const deck = formData.get('deck') as string;
+
+    const response = await browser.runtime.sendMessage({
+        action: 'uploadDeck',
+        file: await file.arrayBuffer(),
+        fileName: file.name,
+        deck: deck
+    });
+
+    if (response.result !== 'success') {
+        throw new Error(response.message || 'Failed to upload deck');
+    }
+
+    return response;
+}
+
 /* Utility function to take a screenshot of the current tab. Will 
 return null if the caller tab is not the active tab, because in that 
 case the screenshot will be wrong */
