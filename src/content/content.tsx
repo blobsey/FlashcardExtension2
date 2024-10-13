@@ -119,7 +119,7 @@ async function createOverlayIfNotExists(initialScreen: Screen): Promise<void> {
     background.className = screenshotUri ? 'filter' : 'backdropFilter';
     background.style.backgroundImage = screenshotUri ? `url(${screenshotUri})` : 'none';
     shadowRoot.appendChild(background);
-    background.animate({ opacity: [0, 1] }, { duration: 250, easing: 'ease' }).finished;
+    await background.animate({ opacity: [0, 1] }, { duration: 250, easing: 'ease' }).finished;
 
     // Silly hacks to trap the focus into the overlay
     document.addEventListener('keydown', trapFocus);

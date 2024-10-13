@@ -83,7 +83,10 @@ const messageHandlers: Record<string, MessageHandler> = {
             throw new Error("Caller tab must be the active tab to capture screenshot");
         }
 
-        const dataUrl = await browser.tabs.captureVisibleTab();
+        const dataUrl = await browser.tabs.captureVisibleTab(null as any, {
+            format: "jpeg",
+            quality: 0
+        });
         sendResponse({ result: 'success', screenshotUri: dataUrl });
     },
     'login': async (message, sender, sendResponse) => {
