@@ -27,7 +27,7 @@ function GradeScreen({ onGradeButtonClick, flashcard, isFlipAnimationDone: isFli
 
     return (
         <>
-        <div className="flex flex-col items-center max-w-[45rem] mx-auto">
+        <div className="flex flex-col items-center max-w-[45em] mx-auto">
             <div className="mb-4 text-center w-full">
                 {renderMarkdown(flashcard?.card_front)}
             </div>

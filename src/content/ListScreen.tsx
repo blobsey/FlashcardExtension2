@@ -101,7 +101,7 @@ const ListScreen: React.FC<ListScreenProps> = ({
                     <BackButton onClick={onBackButtonClicked} />
                     <div className='flex flex-row justify-between items-center space-x-2 w-full '>
                         {/* Just select and + button */}
-                        <div className='flex flex-row w-full max-w-[20rem] space-x-2'>
+                        <div className='flex flex-row w-full max-w-[20em] space-x-2'>
                             <div className='w-full'>
                                 <Select
                                     value={selectedDeck ?? null as any}
@@ -174,7 +174,7 @@ const ListScreen: React.FC<ListScreenProps> = ({
                     </div>
                 </div>
                 {/* Right side of top bar */}
-                <div className="w-full md:w-64 max-w-full md:max-w-[20rem]">
+                <div className="w-full md:w-64 max-w-full md:max-w-[20em]">
                     {/* Search bar */}
                     <input
                         type="text"
@@ -189,7 +189,6 @@ const ListScreen: React.FC<ListScreenProps> = ({
             <div 
                 className="flex-grow overflow-auto pl-2 pr-4 w-full"
                 ref={gridRef}
-                // Remove onScroll prop
             >
             <div style={{ minHeight: `${scrollPosition + (gridRef.current?.clientHeight ?? 0)}px` }}>
                 {filteredFlashcards.length > 0 ? (

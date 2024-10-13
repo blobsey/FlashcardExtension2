@@ -77,7 +77,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Portal container={container}>
       <SelectPrimitive.Content
         ref={ref}
-        className={`relative z-[2147483643] max-h-96 min-w-[8rem] overflow-hidden rounded-md
+        className={`relative z-[2147483643] max-h-96 min-w-[8em] overflow-hidden rounded-md
           bg-white bg-opacity-10 backdrop-blur-[10px]
           text-popover-foreground
           data-[state=open]:animate-in data-[state=closed]:animate-out

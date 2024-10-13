@@ -131,18 +131,18 @@ const FlashcardEditorWidget: React.FC<FlashcardEditorWidgetProps> = ({
             className='flex flex-col items-center relative ease-in-out transition-[width] duration-700 bg-[rgba(255,255,255,0.05)]'
             style={{ 
                 height: `${height}px`,
-                width: isPreviewEnabled ? '90rem' : '45rem',
+                width: isPreviewEnabled ? '90em' : '45em',
                 maxWidth: '90%'
             }}
         >
             {/* Top div (holds top textarea/preview) */}
-            <div className="flex flex-row h-[calc(50%-0.5rem)] w-full">
+            <div className="flex flex-row h-[calc(50%-0.5em)] w-full">
                 {/* Top textarea */}
                 <div
                     className={`relative has-underline ${isDragging ? '' : 'ease-in-out transition-all duration-500'} flex flex-col items-center`}
                     style={{ 
                         width: isPreviewEnabled ? `${splitRatio * 100}%` : '100%',
-                        paddingRight: isPreviewEnabled ? '.5rem' : '0'
+                        paddingRight: isPreviewEnabled ? '.5em' : '0'
                     }}
                 >
                     <textarea
@@ -167,13 +167,13 @@ const FlashcardEditorWidget: React.FC<FlashcardEditorWidgetProps> = ({
             </div>
                 
             {/* Bottom div (holds bottom textarea and preview) */}
-            <div className="items-center flex flex-row h-[calc(50%-0.5rem)] w-full">
+            <div className="items-center flex flex-row h-[calc(50%-0.5em)] w-full">
                 {/* Bottom textarea */}
                 <div
                     className={`${isDragging ? '' : 'ease-in-out transition-all duration-500'} flex flex-col pr-4 h-full items-center`}
                     style={{ 
                         width: isPreviewEnabled ? `${splitRatio * 100}%` : '100%',
-                        paddingRight: isPreviewEnabled ? '.5rem' : '0'
+                        paddingRight: isPreviewEnabled ? '.5em' : '0'
                     }}
                 >
                     <textarea
@@ -205,7 +205,7 @@ const FlashcardEditorWidget: React.FC<FlashcardEditorWidgetProps> = ({
                     className="absolute top-1/2 w-4 opacity-50 cursor-ew-resize flex items-center justify-center hover:opacity-100"
                     style={{ 
                         left: `calc(${splitRatio * 100}%)`, 
-                        height: '2rem',
+                        height: '2em',
                         transform: 'translate(-50%, -50%)'
                     }}
                     onMouseDown={handleMouseDownX}

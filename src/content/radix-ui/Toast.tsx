@@ -78,7 +78,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             {children}
             <ToastPrimitive.Provider swipeDirection="down">
                 <ToastPrimitive.Viewport 
-                    className="fixed bottom-0 left-1/2 transform -translate-x-1/2 flex flex-col justify-end p-6 gap-2 w-full md:max-w-[30rem] max-h-screen z-[2147483645]" 
+                    className="fixed bottom-0 left-1/2 transform -translate-x-1/2 flex flex-col justify-end p-6 gap-2 w-full md:max-w-[30em] max-h-screen z-[2147483645]" 
                 >
                     {toasts.map(({ id, ...toast }) => (
                         <Toast key={id} {...toast} onRemove={() => setToasts(prev => prev.filter(t => t.id !== id))} />
