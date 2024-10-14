@@ -4,10 +4,6 @@
     color: white;
 }
 
-:host * {
-    all: unset;
-}
-
 #blobsey-overlay {
     position: fixed;
     top: 0;

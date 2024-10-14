@@ -80,14 +80,15 @@ const ListScreen: React.FC<ListScreenProps> = ({
 
     const gridRef = useRef<HTMLDivElement>(null);
 
-    // Add useEffect for cleanup
+    // Cleanup
     useEffect(() => {
         // Set initial scroll position when component mounts
         if (gridRef.current) {
-            console.log('Trying to restore scrollPosition to', scrollPosition);
+            console.log('Restoring scrollPosition to', scrollPosition);
+            console.log('Grid has clientHeight', gridRef.current?.clientHeight);
             gridRef.current.scrollTop = scrollPosition;
         }
-    }, [setScrollPosition, scrollPosition]);
+    }, []);
 
     const toast = useToast();
 
@@ -190,7 +191,7 @@ const ListScreen: React.FC<ListScreenProps> = ({
                 className="flex-grow overflow-auto pl-2 pr-4 w-full"
                 ref={gridRef}
             >
-            <div style={{ minHeight: `${scrollPosition + (gridRef.current?.clientHeight ?? 0)}px` }}>
+            <div style={{ minHeight: `${scrollPosition + (window.innerHeight)}px` }}>
                 {filteredFlashcards.length > 0 ? (
                     <div className="py-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredFlashcards.map(card => (

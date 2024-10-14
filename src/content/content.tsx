@@ -87,6 +87,13 @@ async function showListScreen(): Promise<void> {
 }
 
 async function createOverlayIfNotExists(initialScreen: Screen): Promise<void> {
+    // Use requestIdleCallback to wait for an idle period
+    await new Promise<void>(resolve => {
+        requestIdleCallback(() => {
+            resolve();
+        }, { timeout: 2000 }); // Set a maximum timeout of 2 seconds
+    });
+
     let host = document.getElementById('blobsey-host');
     if (!host) {
         host = document.createElement('div');
@@ -118,8 +125,17 @@ async function createOverlayIfNotExists(initialScreen: Screen): Promise<void> {
     background.id = 'blobsey-overlay-background';
     background.className = screenshotUri ? 'filter' : 'backdropFilter';
     background.style.backgroundImage = screenshotUri ? `url(${screenshotUri})` : 'none';
-    shadowRoot.appendChild(background);
-    await background.animate({ opacity: [0, 1] }, { duration: 250, easing: 'ease' }).finished;
+
+    // Use requestIdleCallback to wait for an idle period
+    await new Promise<void>(resolve => {
+        requestIdleCallback(() => {
+            shadowRoot.appendChild(background);
+            background
+                .animate({ opacity: [0, 1] }, { duration: 300, easing: 'ease' })
+                .finished
+                .then(() => resolve());
+        }, { timeout: 1000 }); // Set a maximum timeout of 1 seconds
+    });
 
     // Silly hacks to trap the focus into the overlay
     document.addEventListener('keydown', trapFocus);
@@ -365,8 +381,7 @@ async function init() {
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    window.addEventListener('load', init);
 } else {
-    document.removeEventListener('DOMContentLoaded', init);
     init();
 }

@@ -44,7 +44,7 @@ NOTE: Not including a fetchNextFlashcard() since we should never need it. */
 export async function cacheNextFlashcard(): Promise<void> {
     const userData = await getUserData();
     const currentFlashcard = await getPersistentState<Flashcard | null>('flashcard');
-    let newFlashcard;
+    let newFlashcard: Flashcard | null;
     let attempts = 0;
     const maxAttempts = 3;
 
@@ -58,9 +58,9 @@ export async function cacheNextFlashcard(): Promise<void> {
         }
         newFlashcard = response.flashcard;
         attempts++;
-    } while (newFlashcard.card_id === currentFlashcard?.card_id && attempts < maxAttempts);
+    } while (newFlashcard && newFlashcard.card_id === currentFlashcard?.card_id && attempts < maxAttempts);
 
-    if (newFlashcard.card_id === currentFlashcard?.card_id) {
+    if (newFlashcard && newFlashcard.card_id === currentFlashcard?.card_id) {
         throw new Error(`Failed to fetch a new flashcard after ${maxAttempts} attempts`);
     }
     await setPersistentState('flashcard', newFlashcard);
