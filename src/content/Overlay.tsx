@@ -344,7 +344,7 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef, d
                             await updateUserData({ deck: deck || '' });
                             const updatedUserData = {...userData, deck};
                             setUserData(updatedUserData);
-                            toast({ content: `Active deck set to "${deck}"` });
+                            toast({ content: `Active deck set to "${deck || 'All flashcards'}"` });
                         } catch (error) {
                             console.error('Error updating active deck:', error);
                             toast({ content: `Error setting active deck: ${error}` });
