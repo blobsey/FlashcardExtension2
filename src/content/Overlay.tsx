@@ -332,10 +332,26 @@ const Overlay: React.FC<OverlayProps> = ({ initialScreen, setCurrentScreenRef, d
                     flashcards={flashcards}
                     decks={userData.decks}
                     selectedDeck={selectedDeck}
+                    activeDeck={userData.deck}
                     searchValue={searchValue}
                     scrollPosition={scrollPosition}
                     isFlashcardsLoaded={isFlashcardsLoaded}
                     setSelectedDeck={setSelectedDeck}
+                    setActiveDeck={async (deck: string) => {
+                        try {
+                            setIsLoading(true);
+                            console.log('setActiveDeck to:', deck);
+                            await updateUserData({ deck: deck || '' });
+                            const updatedUserData = {...userData, deck};
+                            setUserData(updatedUserData);
+                            toast({ content: `Active deck set to "${deck}"` });
+                        } catch (error) {
+                            console.error('Error updating active deck:', error);
+                            toast({ content: `Error setting active deck: ${error}` });
+                        } finally {
+                            setIsLoading(false);
+                        }
+                    }}
                     setSearchValue={setSearchValue}
                     setScrollPosition={setScrollPosition}
                     setIsFlashcardsLoaded={setIsFlashcardsLoaded}

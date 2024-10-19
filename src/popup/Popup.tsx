@@ -298,14 +298,15 @@ const Popup: React.FC = () => {
                         id="deckSelect"
                         value={localUserData?.deck || ''}
                         onChange={(e) => handleDeckChange(e.target.value)}
-                        className="w-full pl-2 p-1 rounded bg-zinc-800 text-white border-none outline-none appearance-none cursor-pointer focus:outline-white"
+                        className={`w-full pl-2 p-1 rounded bg-zinc-800 text-white border-none outline-none appearance-none cursor-pointer focus:outline-white ${localUserData?.deck === '' ? 'italic' : ''}`}
                         style={{
                             WebkitAppearance: 'none',
                             MozAppearance: 'none'
                         }}
                     >
+                        <option key='' value='' className='italic'>All flashcards</option>
                         {localUserData?.decks?.map((deck) => (
-                            <option key={deck} value={deck}>
+                            <option key={deck} value={deck} className='not-italic'>
                                 {deck}
                             </option>
                         ))}

@@ -32,12 +32,14 @@ interface ListScreenProps {
 
     // State props
     selectedDeck: string | null;
+    activeDeck: string | null;
     searchValue: string;
     scrollPosition: number;
     isFlashcardsLoaded: boolean;
 
     // State setters
     setSelectedDeck: (deck: string | null) => void;
+    setActiveDeck: (deck: string) => void;
     setSearchValue: (value: string) => void;
     setScrollPosition: (position: number) => void;
     setIsFlashcardsLoaded: (loaded: boolean) => void;
@@ -53,10 +55,12 @@ const ListScreen: React.FC<ListScreenProps> = ({
     flashcards,
     decks,
     selectedDeck,
+    activeDeck,
     searchValue,
     scrollPosition,
     isFlashcardsLoaded,
     setSelectedDeck,
+    setActiveDeck,
     setSearchValue,
     setScrollPosition,
     setIsFlashcardsLoaded,
@@ -90,6 +94,10 @@ const ListScreen: React.FC<ListScreenProps> = ({
         }
     }, []);
 
+    useEffect(() => {
+        console.log('activeDeck:', activeDeck);
+    }, [activeDeck])
+
     const toast = useToast();
 
     return (
@@ -112,9 +120,11 @@ const ListScreen: React.FC<ListScreenProps> = ({
                                         <SelectValue placeholder="All flashcards"/>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value={null as any}><i>All flashcards</i></SelectItem>
+                                        <SelectItem value={null as any}><i>All flashcards</i>{!activeDeck ? ' (active)' : ''}</SelectItem>
                                         {decks && decks.map(deck => (
-                                            <SelectItem key={deck} value={deck}>{deck}</SelectItem>
+                                            <SelectItem key={deck} value={deck}>
+                                                {deck}{deck === activeDeck ? ' (active)' : ''}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -158,7 +168,15 @@ const ListScreen: React.FC<ListScreenProps> = ({
                                 <DotsVerticalIcon className="h-5 w-5" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuItem onSelect={() => console.log("Set as active deck")}>
+                                <DropdownMenuItem 
+                                    /* The disabled state here is a bit of an ugly hack. It's necessary because
+                                    Radix Selects don't support SelectItems with an empty string value. But they do
+                                    accept null as a value. So the select item has to be null, even though my real
+                                    sentinel value is an empty string. Boooooo */
+                                    disabled={(!activeDeck && !selectedDeck) || selectedDeck === activeDeck} 
+                                    onSelect={() => {
+                                        setActiveDeck(selectedDeck ?? '');
+                                }}>
                                     Set as active deck
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => console.log("Download deck")}>
