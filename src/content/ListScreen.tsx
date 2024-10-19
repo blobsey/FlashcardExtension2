@@ -188,6 +188,9 @@ const ListScreen: React.FC<ListScreenProps> = ({
                                 <DropdownMenuItem onSelect={() => console.log("Rename deck")}>
                                     Rename deck
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => toast({content: "This is a test toast!", duration: 100000})}>
+                                    Show Test Toast
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>

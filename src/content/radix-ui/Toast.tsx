@@ -50,9 +50,9 @@ const Toast: React.FC<ToastProps & { onRemove: () => void }> = ({
         <ToastPrimitive.Root 
             duration={duration} 
             onOpenChange={(open) => {
-                if (!open) setTimeout(onRemove, 300);
+                if (!open) setTimeout(onRemove, 150);
             }}
-            className="bg-black bg-opacity-25 backdrop-blur-sm rounded-lg p-2 transition-all duration-300 data-[state=open]:animate-slideUpAndFade data-[state=closed]:animate-fadeOut flex items-center"
+            className="bg-gray-300/10 backdrop-blur-sm rounded p-2 hover:bg-gray-300/15 data-[state=open]:animate-slideUpAndFade data-[state=closed]:animate-fadeOut flex items-center"
         >
             <ToastPrimitive.Description className="text-white flex-grow mr-2">
                 {content}
@@ -78,7 +78,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             {children}
             <ToastPrimitive.Provider swipeDirection="down">
                 <ToastPrimitive.Viewport 
-                    className="fixed bottom-0 left-1/2 transform -translate-x-1/2 flex flex-col justify-end p-6 gap-2 w-full md:max-w-[30em] max-h-screen z-[2147483645]" 
+                    className="fixed bottom-0 left-1/2 transform -translate-x-1/2 flex flex-col justify-end m-6 gap-2 w-full md:max-w-[30rem] max-h-screen z-[2147483645]" 
                 >
                     {toasts.map(({ id, ...toast }) => (
                         <Toast key={id} {...toast} onRemove={() => setToasts(prev => prev.filter(t => t.id !== id))} />
